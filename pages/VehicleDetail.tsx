@@ -1,0 +1,138 @@
+
+import React, { useState } from 'react';
+import { useParams, Link, Navigate } from 'react-router-dom';
+import { CARS_DATA } from '../constants';
+
+const VehicleDetail: React.FC = () => {
+  const { id } = useParams();
+  const car = CARS_DATA.find(c => c.id === id);
+  const [activeImage, setActiveImage] = useState(0);
+
+  if (!car) return <Navigate to="/inventory" />;
+
+  return (
+    <div className="pt-32 pb-24 px-4 bg-background-light dark:bg-background-dark min-h-screen">
+      <div className="max-w-7xl mx-auto">
+        <nav className="flex mb-8 text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">
+          <Link to="/" className="hover:text-primary">Início</Link>
+          <span className="mx-2 text-primary">•</span>
+          <Link to="/inventory" className="hover:text-primary">Estoque</Link>
+          <span className="mx-2 text-primary">•</span>
+          <span className="dark:text-white">{car.brand} {car.model}</span>
+        </nav>
+
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-12">
+          {/* Main Content (Images + Description) */}
+          <div className="lg:col-span-2 space-y-8">
+            <div className="relative group">
+              <div className="aspect-[16/9] rounded-[40px] overflow-hidden bg-slate-200 dark:bg-surface-dark shadow-2xl">
+                <img src={car.images[activeImage]} alt={car.model} className="w-full h-full object-cover transition-all duration-700" />
+              </div>
+              <div className="absolute bottom-6 right-6 glass-effect text-white px-4 py-2 rounded-full text-[10px] font-bold uppercase tracking-widest border border-white/10 flex items-center gap-2">
+                <span className="material-icons-round text-sm">photo_library</span>
+                {activeImage + 1} / {car.images.length} Fotos
+              </div>
+            </div>
+
+            <div className="grid grid-cols-4 sm:grid-cols-6 gap-4">
+              {car.images.map((img, i) => (
+                <button 
+                  key={i} 
+                  onClick={() => setActiveImage(i)}
+                  className={`aspect-video rounded-2xl overflow-hidden border-2 transition-all ${activeImage === i ? 'border-primary ring-4 ring-primary/20 scale-105' : 'border-transparent opacity-60 hover:opacity-100'}`}
+                >
+                  <img src={img} alt={`${car.model} view ${i}`} className="w-full h-full object-cover" />
+                </button>
+              ))}
+            </div>
+
+            <div className="bg-white dark:bg-surface-dark p-10 rounded-[40px] border border-slate-200 dark:border-white/5 shadow-sm">
+              <h2 className="text-2xl font-display font-black mb-8 dark:text-white uppercase italic tracking-tighter flex items-center gap-4">
+                <span className="w-2 h-8 bg-primary rounded-full"></span>
+                Ficha Técnica
+              </h2>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-y-6 gap-x-16">
+                {[
+                  { label: 'Motor', value: car.engine },
+                  { label: 'Potência', value: car.power },
+                  { label: '0-100 km/h', value: car.acceleration },
+                  { label: 'Tração', value: car.traction },
+                  { label: 'Câmbio', value: car.transmission },
+                  { label: 'Interior', value: car.interior },
+                  { label: 'Combustível', value: car.fuel },
+                  { label: 'Cor Exterior', value: car.color }
+                ].map((item, i) => (
+                  <div key={i} className="flex justify-between border-b border-slate-100 dark:border-white/5 pb-4">
+                    <span className="text-[10px] font-bold uppercase tracking-widest text-slate-400">{item.label}</span>
+                    <span className="font-bold dark:text-white text-sm">{item.value}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div className="bg-white dark:bg-surface-dark p-10 rounded-[40px] border border-slate-200 dark:border-white/5 shadow-sm">
+              <h2 className="text-2xl font-display font-black mb-6 dark:text-white uppercase italic tracking-tighter flex items-center gap-4">
+                <span className="w-2 h-8 bg-primary rounded-full"></span>
+                Descrição
+              </h2>
+              <p className="text-slate-600 dark:text-slate-300 leading-relaxed font-light text-lg">
+                {car.description}
+              </p>
+            </div>
+          </div>
+
+          {/* Sidebar (Price + CTAs) */}
+          <div className="lg:col-span-1">
+            <div className="sticky top-28 space-y-6">
+              <div className="bg-white dark:bg-surface-dark p-10 rounded-[40px] border border-slate-200 dark:border-white/5 shadow-2xl">
+                <div className="mb-8">
+                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.4em] block mb-2">Preço à vista</span>
+                  <h1 className="text-4xl font-black text-slate-900 dark:text-white mb-2 leading-none uppercase italic tracking-tighter">{car.model}</h1>
+                  <span className="text-5xl font-black text-primary drop-shadow-[0_2px_10px_rgba(242,255,0,0.3)] block mt-4">R$ {car.price.toLocaleString('pt-BR')}</span>
+                </div>
+
+                <div className="grid grid-cols-3 gap-3 mb-8">
+                  <div className="bg-slate-50 dark:bg-background-dark p-4 rounded-3xl text-center border border-transparent hover:border-primary/20 transition-all">
+                    <span className="material-icons-round text-primary text-lg block mb-1">calendar_today</span>
+                    <p className="text-[8px] font-black uppercase text-slate-400 mb-1">Ano</p>
+                    <p className="font-black text-xs dark:text-white">{car.year}</p>
+                  </div>
+                  <div className="bg-slate-50 dark:bg-background-dark p-4 rounded-3xl text-center border border-transparent hover:border-primary/20 transition-all">
+                    <span className="material-icons-round text-primary text-lg block mb-1">speed</span>
+                    <p className="text-[8px] font-black uppercase text-slate-400 mb-1">Km</p>
+                    <p className="font-black text-xs dark:text-white">{car.km}</p>
+                  </div>
+                  <div className="bg-slate-50 dark:bg-background-dark p-4 rounded-3xl text-center border border-transparent hover:border-primary/20 transition-all">
+                    <span className="material-icons-round text-primary text-lg block mb-1">local_gas_station</span>
+                    <p className="text-[8px] font-black uppercase text-slate-400 mb-1">Combust.</p>
+                    <p className="font-black text-xs dark:text-white">{car.fuel}</p>
+                  </div>
+                </div>
+
+                <button className="w-full bg-primary text-black py-6 rounded-2xl font-black text-base flex items-center justify-center gap-3 hover:scale-[1.02] active:scale-95 transition-all shadow-xl shadow-primary/20 uppercase tracking-widest mb-4">
+                  <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.438 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L0 24l6.335-1.662c1.72.94 3.659 1.437 5.634 1.437h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"></path>
+                  </svg>
+                  TENHO INTERESSE
+                </button>
+              </div>
+
+              <div className="bg-slate-100 dark:bg-surface-dark p-8 rounded-[40px] border border-slate-200 dark:border-white/5 text-center">
+                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4">Fale com um consultor</p>
+                <div className="flex justify-center -space-x-4 mb-6">
+                  {[1,2,3].map(i => (
+                    <img key={i} src={`https://picsum.photos/seed/consultant${i}/100/100`} className="w-12 h-12 rounded-full border-4 border-white dark:border-surface-dark shadow-lg" alt="Consultant" />
+                  ))}
+                  <div className="w-12 h-12 rounded-full bg-primary flex items-center justify-center text-[10px] font-black text-black border-4 border-white dark:border-surface-dark shadow-lg">+2</div>
+                </div>
+                <p className="text-xl font-black dark:text-white">(47) 9999-9999</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default VehicleDetail;

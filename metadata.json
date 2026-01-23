@@ -1,0 +1,8 @@
+{
+  "name": "Peicker Veículos Premium",
+  "description": "Uma plataforma de luxo para compra e venda de veículos exclusivos, com design moderno, filtros avançados e assistente virtual inteligente.",
+  "requestFramePermissions": [
+    "camera",
+    "microphone"
+  ]
+}
