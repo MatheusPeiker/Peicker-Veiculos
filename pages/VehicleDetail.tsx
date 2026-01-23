@@ -1,14 +1,50 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useParams, Link, Navigate } from 'react-router-dom';
-import { CARS_DATA } from '../constants';
+import { supabase } from '../src/lib/supabase';
+import { Veiculo } from '../types';
 
 const VehicleDetail: React.FC = () => {
   const { id } = useParams();
-  const car = CARS_DATA.find(c => c.id === id);
+  const [car, setCar] = useState<Veiculo | null>(null);
+  const [loading, setLoading] = useState(true);
   const [activeImage, setActiveImage] = useState(0);
 
-  if (!car) return <Navigate to="/inventory" />;
+  useEffect(() => {
+    const fetchCar = async () => {
+      if (!id) return;
+      setLoading(true);
+      const { data, error } = await supabase
+        .from('veiculos')
+        .select('*')
+        .eq('id', id)
+        .single();
+
+      if (error) {
+        console.error('Error fetching vehicle:', error);
+      } else {
+        setCar(data);
+      }
+      setLoading(false);
+    };
+
+    fetchCar();
+  }, [id]);
+
+  if (loading) {
+    return (
+      <div className="pt-32 pb-24 text-center min-h-screen">
+        <div className="inline-block animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary mb-4"></div>
+        <p className="text-slate-500 font-medium">Carregando detalhes...</p>
+      </div>
+    );
+  }
+
+  if (!car) return <Navigate to="/estoque" />;
+
+  // Create an array of images for the gallery logic (currently supports 1 image from DB)
+  // If you add an 'images' column to Supabase later, you can map it here.
+  const images = [car.imagem_url];
 
   return (
     <div className="pt-32 pb-24 px-4 bg-background-light dark:bg-background-dark min-h-screen">
@@ -16,9 +52,9 @@ const VehicleDetail: React.FC = () => {
         <nav className="flex mb-8 text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">
           <Link to="/" className="hover:text-primary">Início</Link>
           <span className="mx-2 text-primary">•</span>
-          <Link to="/inventory" className="hover:text-primary">Estoque</Link>
+          <Link to="/estoque" className="hover:text-primary">Estoque</Link>
           <span className="mx-2 text-primary">•</span>
-          <span className="dark:text-white">{car.brand} {car.model}</span>
+          <span className="dark:text-white">{car.marca} {car.modelo}</span>
         </nav>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-12">
@@ -26,25 +62,34 @@ const VehicleDetail: React.FC = () => {
           <div className="lg:col-span-2 space-y-8">
             <div className="relative group">
               <div className="aspect-[16/9] rounded-[40px] overflow-hidden bg-slate-200 dark:bg-surface-dark shadow-2xl">
-                <img src={car.images[activeImage]} alt={car.model} className="w-full h-full object-cover transition-all duration-700" />
+                <img
+                  src={images[activeImage] || 'https://placehold.co/800x600?text=Sem+Imagem'}
+                  alt={car.modelo}
+                  className="w-full h-full object-cover transition-all duration-700"
+                  onError={(e) => {
+                    e.currentTarget.src = 'https://images.unsplash.com/photo-1492144534655-ae79c964c9d7?auto=format&fit=crop&q=90&w=1200';
+                  }}
+                />
               </div>
               <div className="absolute bottom-6 right-6 glass-effect text-white px-4 py-2 rounded-full text-[10px] font-bold uppercase tracking-widest border border-white/10 flex items-center gap-2">
                 <span className="material-icons-round text-sm">photo_library</span>
-                {activeImage + 1} / {car.images.length} Fotos
+                {activeImage + 1} / {images.length} Fotos
               </div>
             </div>
 
-            <div className="grid grid-cols-4 sm:grid-cols-6 gap-4">
-              {car.images.map((img, i) => (
-                <button 
-                  key={i} 
-                  onClick={() => setActiveImage(i)}
-                  className={`aspect-video rounded-2xl overflow-hidden border-2 transition-all ${activeImage === i ? 'border-primary ring-4 ring-primary/20 scale-105' : 'border-transparent opacity-60 hover:opacity-100'}`}
-                >
-                  <img src={img} alt={`${car.model} view ${i}`} className="w-full h-full object-cover" />
-                </button>
-              ))}
-            </div>
+            {images.length > 1 && (
+              <div className="grid grid-cols-4 sm:grid-cols-6 gap-4">
+                {images.map((img, i) => (
+                  <button
+                    key={i}
+                    onClick={() => setActiveImage(i)}
+                    className={`aspect-video rounded-2xl overflow-hidden border-2 transition-all ${activeImage === i ? 'border-primary ring-4 ring-primary/20 scale-105' : 'border-transparent opacity-60 hover:opacity-100'}`}
+                  >
+                    <img src={img} alt={`${car.modelo} view ${i}`} className="w-full h-full object-cover" />
+                  </button>
+                ))}
+              </div>
+            )}
 
             <div className="bg-white dark:bg-surface-dark p-10 rounded-[40px] border border-slate-200 dark:border-white/5 shadow-sm">
               <h2 className="text-2xl font-display font-black mb-8 dark:text-white uppercase italic tracking-tighter flex items-center gap-4">
@@ -53,14 +98,14 @@ const VehicleDetail: React.FC = () => {
               </h2>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-y-6 gap-x-16">
                 {[
-                  { label: 'Motor', value: car.engine },
-                  { label: 'Potência', value: car.power },
-                  { label: '0-100 km/h', value: car.acceleration },
-                  { label: 'Tração', value: car.traction },
-                  { label: 'Câmbio', value: car.transmission },
-                  { label: 'Interior', value: car.interior },
-                  { label: 'Combustível', value: car.fuel },
-                  { label: 'Cor Exterior', value: car.color }
+                  { label: 'Modelo', value: car.modelo },
+                  { label: 'Marca', value: car.marca },
+                  { label: 'Ano', value: car.ano },
+                  { label: 'KM', value: car.quilometragem || '0 km' },
+                  { label: 'Câmbio', value: car.cambio },
+                  { label: 'Combustível', value: car.combustivel },
+                  { label: 'Tipo', value: car.tipo },
+                  // Add more fields if available in DB
                 ].map((item, i) => (
                   <div key={i} className="flex justify-between border-b border-slate-100 dark:border-white/5 pb-4">
                     <span className="text-[10px] font-bold uppercase tracking-widest text-slate-400">{item.label}</span>
@@ -76,7 +121,9 @@ const VehicleDetail: React.FC = () => {
                 Descrição
               </h2>
               <p className="text-slate-600 dark:text-slate-300 leading-relaxed font-light text-lg">
-                {car.description}
+                Veículo {car.marca} {car.modelo} ano {car.ano}, disponível para venda.
+                Entre em contato para mais detalhes sobre este {car.tipo}.
+                {/* Ensure description fallback if not in DB */}
               </p>
             </div>
           </div>
@@ -87,25 +134,27 @@ const VehicleDetail: React.FC = () => {
               <div className="bg-white dark:bg-surface-dark p-10 rounded-[40px] border border-slate-200 dark:border-white/5 shadow-2xl">
                 <div className="mb-8">
                   <span className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.4em] block mb-2">Preço à vista</span>
-                  <h1 className="text-4xl font-black text-slate-900 dark:text-white mb-2 leading-none uppercase italic tracking-tighter">{car.model}</h1>
-                  <span className="text-5xl font-black text-primary drop-shadow-[0_2px_10px_rgba(242,255,0,0.3)] block mt-4">R$ {car.price.toLocaleString('pt-BR')}</span>
+                  <h1 className="text-4xl font-black text-slate-900 dark:text-white mb-2 leading-none uppercase italic tracking-tighter">{car.modelo}</h1>
+                  <span className="text-5xl font-black text-primary drop-shadow-[0_2px_10px_rgba(242,255,0,0.3)] block mt-4">
+                    {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(car.preco)}
+                  </span>
                 </div>
 
                 <div className="grid grid-cols-3 gap-3 mb-8">
                   <div className="bg-slate-50 dark:bg-background-dark p-4 rounded-3xl text-center border border-transparent hover:border-primary/20 transition-all">
                     <span className="material-icons-round text-primary text-lg block mb-1">calendar_today</span>
                     <p className="text-[8px] font-black uppercase text-slate-400 mb-1">Ano</p>
-                    <p className="font-black text-xs dark:text-white">{car.year}</p>
+                    <p className="font-black text-xs dark:text-white">{car.ano}</p>
                   </div>
                   <div className="bg-slate-50 dark:bg-background-dark p-4 rounded-3xl text-center border border-transparent hover:border-primary/20 transition-all">
                     <span className="material-icons-round text-primary text-lg block mb-1">speed</span>
                     <p className="text-[8px] font-black uppercase text-slate-400 mb-1">Km</p>
-                    <p className="font-black text-xs dark:text-white">{car.km}</p>
+                    <p className="font-black text-xs dark:text-white">{car.quilometragem}</p>
                   </div>
                   <div className="bg-slate-50 dark:bg-background-dark p-4 rounded-3xl text-center border border-transparent hover:border-primary/20 transition-all">
                     <span className="material-icons-round text-primary text-lg block mb-1">local_gas_station</span>
                     <p className="text-[8px] font-black uppercase text-slate-400 mb-1">Combust.</p>
-                    <p className="font-black text-xs dark:text-white">{car.fuel}</p>
+                    <p className="font-black text-xs dark:text-white">{car.combustivel}</p>
                   </div>
                 </div>
 
@@ -120,12 +169,12 @@ const VehicleDetail: React.FC = () => {
               <div className="bg-slate-100 dark:bg-surface-dark p-8 rounded-[40px] border border-slate-200 dark:border-white/5 text-center">
                 <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4">Fale com um consultor</p>
                 <div className="flex justify-center -space-x-4 mb-6">
-                  {[1,2,3].map(i => (
+                  {[1, 2, 3].map(i => (
                     <img key={i} src={`https://picsum.photos/seed/consultant${i}/100/100`} className="w-12 h-12 rounded-full border-4 border-white dark:border-surface-dark shadow-lg" alt="Consultant" />
                   ))}
                   <div className="w-12 h-12 rounded-full bg-primary flex items-center justify-center text-[10px] font-black text-black border-4 border-white dark:border-surface-dark shadow-lg">+2</div>
                 </div>
-                <p className="text-xl font-black dark:text-white">(47) 9999-9999</p>
+                <p className="text-xl font-black dark:text-white">(47) 99221-2581</p>
               </div>
             </div>
           </div>

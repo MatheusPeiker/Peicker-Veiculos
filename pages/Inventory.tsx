@@ -1,29 +1,74 @@
-
-import React, { useState, useMemo } from 'react';
-import { Link } from 'react-router-dom';
-import { CARS_DATA } from '../constants';
+import React, { useState, useMemo, useEffect } from 'react';
+import { Link, useSearchParams } from 'react-router-dom';
+import { supabase } from '../src/lib/supabase';
+import { Veiculo } from '../types';
 
 const Inventory: React.FC = () => {
-  const [filterBrand, setFilterBrand] = useState<string>('All');
-  const [searchTerm, setSearchTerm] = useState('');
-  const [maxPrice, setMaxPrice] = useState<number>(2000000);
+  const [searchParams] = useSearchParams();
+  const [cars, setCars] = useState<Veiculo[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  // Marcas mais vendidas no Brasil + Premium
-  const popularBrands = [
-    'Volkswagen', 'Fiat', 'Chevrolet', 'Toyota', 'Hyundai', 
-    'Honda', 'Jeep', 'Renault', 'Nissan', 'Ford', 
-    'Porsche', 'BMW', 'Audi', 'Mercedes-Benz'
-  ];
+  const [filterBrand, setFilterBrand] = useState<string>(searchParams.get('brand') || 'All');
+  const [filterFuel, setFilterFuel] = useState<string>('All');
+  const [filterTransmission, setFilterTransmission] = useState<string>('All');
+  const [filterType, setFilterType] = useState<string>('All');
+  const [searchTerm, setSearchTerm] = useState('');
+  const [maxPrice, setMaxPrice] = useState<number>(500000);
+
+  // Fetch data from Supabase
+  useEffect(() => {
+    const fetchCars = async () => {
+      setLoading(true);
+      const { data, error } = await supabase
+        .from('veiculos')
+        .select('*');
+
+      if (error) {
+        console.error('Error fetching vehicles:', error);
+      } else {
+        setCars(data || []);
+      }
+      setLoading(false);
+    };
+
+    fetchCars();
+  }, []);
+
+  // Update filter if URL param changes
+  useEffect(() => {
+    const brandParam = searchParams.get('brand');
+    console.log('Brand param changed:', brandParam);
+    if (brandParam) {
+      setFilterBrand(brandParam);
+    }
+  }, [searchParams]);
 
   const filteredCars = useMemo(() => {
-    return CARS_DATA.filter(car => {
-      const matchesBrand = filterBrand === 'All' || car.brand === filterBrand;
-      const matchesSearch = car.model.toLowerCase().includes(searchTerm.toLowerCase()) || 
-                           car.brand.toLowerCase().includes(searchTerm.toLowerCase());
-      const matchesPrice = car.price <= maxPrice;
-      return matchesBrand && matchesSearch && matchesPrice;
+    return cars.filter(car => {
+      const matchesBrand = filterBrand === 'All' || car.marca === filterBrand;
+      const matchesFuel = filterFuel === 'All' ||
+        (filterFuel === 'Gasolina/Flex' ? (car.combustivel === 'Gasolina' || car.combustivel === 'Flex') : car.combustivel === filterFuel);
+      const matchesTransmission = filterTransmission === 'All' || car.cambio === filterTransmission;
+      const matchesType = filterType === 'All' || car.tipo.toLowerCase() === filterType.toLowerCase();
+      const matchesSearch = car.modelo.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        car.marca.toLowerCase().includes(searchTerm.toLowerCase());
+      const matchesPrice = car.preco <= maxPrice;
+      return matchesBrand && matchesSearch && matchesPrice && matchesFuel && matchesTransmission && matchesType;
     });
-  }, [filterBrand, searchTerm, maxPrice]);
+  }, [cars, filterBrand, searchTerm, maxPrice, filterFuel, filterTransmission, filterType]);
+
+  // Unique brands from actual data or defaults
+  const uniqueBrands = Array.from(new Set(cars.map(c => c.marca))).sort();
+  // Ensure we have at least the popular default ones if DB is empty to show layout structure
+  const popularBrands = uniqueBrands.length > 0 ? uniqueBrands : [
+    'Volkswagen', 'Fiat', 'Chevrolet', 'Toyota', 'Hyundai',
+    'Honda', 'Jeep', 'Renault', 'Nissan', 'Ford',
+    'Mitsubishi', 'Troller'
+  ];
+
+  const formatPrice = (price: number) => {
+    return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(price);
+  };
 
   return (
     <div className="pt-32 pb-32 px-4 bg-background-light dark:bg-background-dark min-h-screen">
@@ -31,9 +76,9 @@ const Inventory: React.FC = () => {
         <header className="mb-16">
           <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
             <div className="space-y-4">
-              <span className="text-primary font-bold uppercase tracking-[0.5em] text-[10px] block">Inventory</span>
+              <span className="text-primary font-bold uppercase tracking-[0.5em] text-[10px] block">Catálogo</span>
               <h1 className="text-5xl md:text-7xl font-display font-black uppercase tracking-tighter italic dark:text-white leading-none">
-                ESTOQUE <span className="text-primary">ELITE.</span>
+                ESTOQUE DE <span className="text-primary">NAVES.</span>
               </h1>
             </div>
             <p className="text-slate-500 dark:text-slate-400 font-light max-w-sm">
@@ -48,8 +93,15 @@ const Inventory: React.FC = () => {
             <div className="bg-white dark:bg-surface-dark p-10 rounded-[40px] border border-slate-200 dark:border-white/5 shadow-sm sticky top-28">
               <div className="flex items-center justify-between mb-10">
                 <h2 className="font-display font-black text-xl dark:text-white uppercase tracking-tighter italic">Filtros</h2>
-                <button 
-                  onClick={() => {setFilterBrand('All'); setSearchTerm(''); setMaxPrice(2000000);}} 
+                <button
+                  onClick={() => {
+                    setFilterBrand('All');
+                    setSearchTerm('');
+                    setMaxPrice(500000);
+                    setFilterFuel('All');
+                    setFilterTransmission('All');
+                    setFilterType('All');
+                  }}
                   className="text-[10px] text-slate-400 hover:text-primary uppercase font-black tracking-widest transition-colors"
                 >
                   Limpar Tudo
@@ -62,13 +114,67 @@ const Inventory: React.FC = () => {
                   <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 mb-4 flex items-center gap-2">
                     <span className="material-icons-round text-sm">search</span> Busca Rápida
                   </h3>
-                  <input 
-                    type="text" 
-                    placeholder="Modelo, marca ou ano..." 
+                  <input
+                    type="text"
+                    placeholder="Modelo, marca ou ano..."
                     className="w-full bg-slate-100 dark:bg-background-dark border-none rounded-2xl focus:ring-2 focus:ring-primary text-sm p-5 transition-all outline-none"
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
                   />
+                </div>
+
+                {/* Vehicle Type Filter */}
+                <div>
+                  <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 mb-4 flex items-center gap-2">
+                    <span className="material-icons-round text-sm">directions_car</span> Tipo
+                  </h3>
+                  <div className="flex gap-2">
+                    {['All', 'Carro', 'Moto'].map(type => (
+                      <button
+                        key={type}
+                        onClick={() => setFilterType(type)}
+                        className={`flex-1 py-3 rounded-xl text-[10px] font-black transition-all border uppercase tracking-widest ${filterType === type ? 'bg-primary text-black border-primary' : 'bg-slate-50 dark:bg-white/5 dark:text-slate-400 border-transparent hover:border-primary/30'}`}
+                      >
+                        {type === 'All' ? 'Todos' : type}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Transmission Filter */}
+                <div>
+                  <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 mb-4 flex items-center gap-2">
+                    <span className="material-icons-round text-sm">settings</span> Câmbio
+                  </h3>
+                  <div className="flex gap-2">
+                    {['All', 'Automático', 'Manual'].map(trans => (
+                      <button
+                        key={trans}
+                        onClick={() => setFilterTransmission(trans)}
+                        className={`flex-1 py-3 rounded-xl text-[10px] font-black transition-all border uppercase tracking-widest ${filterTransmission === trans ? 'bg-primary text-black border-primary' : 'bg-slate-50 dark:bg-white/5 dark:text-slate-400 border-transparent hover:border-primary/30'}`}
+                      >
+                        {trans === 'All' ? 'Todos' : trans}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Fuel Filter */}
+                <div>
+                  <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 mb-4 flex items-center gap-2">
+                    <span className="material-icons-round text-sm">local_gas_station</span> Combustível
+                  </h3>
+                  <div className="grid grid-cols-2 gap-2">
+                    {['All', 'Gasolina', 'Flex', 'Diesel', 'Elétrico'].map(fuel => (
+                      <button
+                        key={fuel}
+                        onClick={() => setFilterFuel(fuel)}
+                        className={`py-3 rounded-xl text-[10px] font-black transition-all border uppercase tracking-widest ${filterFuel === fuel ? 'bg-primary text-black border-primary' : 'bg-slate-50 dark:bg-white/5 dark:text-slate-400 border-transparent hover:border-primary/30'}`}
+                      >
+                        {fuel === 'All' ? 'Todos' : fuel}
+                      </button>
+                    ))}
+                  </div>
                 </div>
 
                 {/* Price Range */}
@@ -77,18 +183,18 @@ const Inventory: React.FC = () => {
                     <span className="material-icons-round text-sm">payments</span> Preço Máximo
                   </h3>
                   <div className="space-y-4">
-                    <input 
-                      type="range" 
-                      min="50000" 
-                      max="1500000" 
+                    <input
+                      type="range"
+                      min="10000"
+                      max="500000"
                       step="10000"
                       className="w-full h-1.5 bg-slate-200 dark:bg-white/10 rounded-lg appearance-none cursor-pointer accent-primary"
                       value={maxPrice}
                       onChange={(e) => setMaxPrice(parseInt(e.target.value))}
                     />
                     <div className="flex justify-between items-center font-black text-xs dark:text-white">
-                      <span className="opacity-50">R$ 50k</span>
-                      <span className="text-primary text-sm bg-primary/10 px-3 py-1 rounded-lg">R$ {(maxPrice/1000).toFixed(0)}k</span>
+                      <span className="opacity-50">R$ 10k</span>
+                      <span className="text-primary text-sm bg-primary/10 px-3 py-1 rounded-lg">R$ {(maxPrice / 1000).toFixed(0)}k</span>
                     </div>
                   </div>
                 </div>
@@ -135,37 +241,42 @@ const Inventory: React.FC = () => {
               </div>
             </div>
 
-            {filteredCars.length > 0 ? (
+            {loading ? (
+              <div className="py-32 text-center">
+                <div className="inline-block animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary mb-4"></div>
+                <p className="text-slate-500 font-medium">Carregando estoque...</p>
+              </div>
+            ) : filteredCars.length > 0 ? (
               <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8">
                 {filteredCars.map(car => (
-                  <Link 
-                    key={car.id} 
+                  <Link
+                    key={car.id}
                     to={`/vehicle/${car.id}`}
                     className="group bg-white dark:bg-surface-dark rounded-[40px] overflow-hidden border border-slate-200 dark:border-white/5 transition-all hover:border-primary/50 hover:shadow-2xl flex flex-col h-full"
                   >
                     <div className="relative aspect-[4/3] overflow-hidden">
-                      <img src={car.images[0]} alt={car.model} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" />
+                      <img src={car.imagem_url} alt={car.modelo} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" />
                       <div className="absolute top-6 right-6 flex flex-col gap-2">
-                         <button className="w-10 h-10 rounded-full bg-black/40 backdrop-blur-md flex items-center justify-center text-white hover:text-primary transition-colors">
-                           <span className="material-icons-round text-sm">favorite_border</span>
-                         </button>
+                        <button className="w-10 h-10 rounded-full bg-black/40 backdrop-blur-md flex items-center justify-center text-white hover:text-primary transition-colors">
+                          <span className="material-icons-round text-sm">favorite_border</span>
+                        </button>
                       </div>
                     </div>
                     <div className="p-10 flex-1 flex flex-col">
                       <div className="flex justify-between items-start mb-4">
-                        <p className="text-[10px] font-black text-primary uppercase tracking-[0.3em]">{car.brand}</p>
-                        <span className="text-[10px] font-bold text-slate-400 bg-slate-100 dark:bg-white/5 px-3 py-1 rounded-full uppercase">{car.year}</span>
+                        <p className="text-[10px] font-black text-primary uppercase tracking-[0.3em]">{car.marca}</p>
+                        <span className="text-[10px] font-bold text-slate-400 bg-slate-100 dark:bg-white/5 px-3 py-1 rounded-full uppercase">{car.ano}</span>
                       </div>
-                      <h3 className="text-xl font-bold mb-8 dark:text-white group-hover:text-primary transition-colors line-clamp-1 leading-none">{car.model}</h3>
-                      
+                      <h3 className="text-xl font-bold mb-8 dark:text-white group-hover:text-primary transition-colors line-clamp-1 leading-none">{car.modelo}</h3>
+
                       <div className="grid grid-cols-3 gap-4 py-6 border-y border-slate-100 dark:border-white/5 mb-8">
                         <div className="flex flex-col items-center">
                           <span className="material-icons-round text-primary text-base mb-1">speed</span>
-                          <span className="text-[9px] font-black text-slate-500 uppercase">{car.km}</span>
+                          <span className="text-[9px] font-black text-slate-500 uppercase">{car.quilometragem}</span>
                         </div>
                         <div className="flex flex-col items-center border-x border-slate-100 dark:border-white/5">
                           <span className="material-icons-round text-primary text-base mb-1">local_gas_station</span>
-                          <span className="text-[9px] font-black text-slate-500 uppercase">{car.fuel}</span>
+                          <span className="text-[9px] font-black text-slate-500 uppercase">{car.combustivel}</span>
                         </div>
                         <div className="flex flex-col items-center">
                           <span className="material-icons-round text-primary text-base mb-1">settings</span>
@@ -174,7 +285,7 @@ const Inventory: React.FC = () => {
                       </div>
 
                       <div className="mt-auto flex justify-between items-center">
-                        <span className="text-2xl font-black text-slate-900 dark:text-white italic tracking-tighter">R$ {car.price.toLocaleString('pt-BR')}</span>
+                        <span className="text-2xl font-black text-slate-900 dark:text-white italic tracking-tighter">{formatPrice(car.preco)}</span>
                         <div className="bg-primary text-black p-3 rounded-xl group-hover:scale-110 transition-transform shadow-lg shadow-primary/20">
                           <span className="material-icons-round text-sm">arrow_forward</span>
                         </div>
@@ -188,8 +299,8 @@ const Inventory: React.FC = () => {
                 <span className="material-icons-round text-6xl text-slate-200 dark:text-white/10 mb-6">search_off</span>
                 <h3 className="text-2xl font-black dark:text-white uppercase tracking-tighter mb-2">Nenhum veículo encontrado</h3>
                 <p className="text-slate-500 text-sm">Tente ajustar seus filtros ou busca.</p>
-                <button 
-                  onClick={() => {setFilterBrand('All'); setSearchTerm(''); setMaxPrice(2000000);}}
+                <button
+                  onClick={() => { setFilterBrand('All'); setSearchTerm(''); setMaxPrice(500000); }}
                   className="mt-8 bg-primary text-black font-black py-4 px-10 rounded-2xl text-[10px] uppercase tracking-widest hover:scale-105 transition-all"
                 >
                   Resetar Filtros

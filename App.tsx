@@ -2,6 +2,7 @@
 import React from 'react';
 import { HashRouter as Router, Routes, Route } from 'react-router-dom';
 import { Layout } from './components/Layout';
+import { ErrorBoundary } from './src/components/ErrorBoundary';
 import Home from './pages/Home';
 import Inventory from './pages/Inventory';
 import VehicleDetail from './pages/VehicleDetail';
@@ -22,17 +23,19 @@ const ContactPlaceholder = () => (
 
 const App: React.FC = () => {
   return (
-    <Router>
-      <Layout>
-        <Routes>
-          <Route path="/" element={<Home />} />
-          <Route path="/inventory" element={<Inventory />} />
-          <Route path="/vehicle/:id" element={<VehicleDetail />} />
-          <Route path="/about" element={<AboutPlaceholder />} />
-          <Route path="/contact" element={<ContactPlaceholder />} />
-        </Routes>
-      </Layout>
-    </Router>
+    <ErrorBoundary>
+      <Router>
+        <Layout>
+          <Routes>
+            <Route path="/" element={<Home />} />
+            <Route path="/estoque" element={<Inventory />} />
+            <Route path="/vehicle/:id" element={<VehicleDetail />} />
+            <Route path="/about" element={<AboutPlaceholder />} />
+            <Route path="/contact" element={<ContactPlaceholder />} />
+          </Routes>
+        </Layout>
+      </Router>
+    </ErrorBoundary>
   );
 };
 

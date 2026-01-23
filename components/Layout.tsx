@@ -1,16 +1,21 @@
 
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
+import logo from '@/src/assets/logo.png';
 
-const Logo: React.FC = () => {
+const Logo: React.FC<{ isScrolled?: boolean }> = ({ isScrolled = false }) => {
   const [hasError, setHasError] = useState(false);
 
   return (
-    <Link to="/" className="flex-shrink-0 flex items-center h-14 md:h-16 group">
+    <Link
+      to="/"
+      className={`flex-shrink-0 flex items-center group transition-all duration-500 ${isScrolled ? 'h-16 md:h-20' : 'h-28 md:h-36'
+        }`}
+    >
       {!hasError ? (
-        <img 
-          src="logo.png" 
-          alt="Fellipe Peicker Veículos" 
+        <img
+          src={logo}
+          alt="Fellipe Peicker Veículos"
           className="h-full w-auto object-contain transition-transform group-hover:scale-105 duration-500"
           onError={() => setHasError(true)}
         />
@@ -39,19 +44,19 @@ const Header: React.FC = () => {
   };
 
   return (
-    <nav className={`fixed w-full z-50 transition-all duration-500 ${isScrolled ? 'bg-white/95 dark:bg-background-dark/95 backdrop-blur-xl border-b border-slate-200 dark:border-white/5 h-20' : 'bg-transparent h-28'}`}>
+    <nav className={`fixed w-full z-50 transition-all duration-500 ${isScrolled ? 'bg-white/95 dark:bg-background-dark/95 backdrop-blur-xl border-b border-slate-200 dark:border-white/5 h-20' : 'bg-transparent h-36'}`}>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-full flex items-center justify-between">
-        <Logo />
+        <Logo isScrolled={isScrolled} />
 
         <div className="hidden md:flex items-center space-x-10">
           <div className="flex items-center space-x-8">
             {['Início', 'Estoque', 'Sobre', 'Contato'].map((item) => {
-              const path = item === 'Início' ? '/' : `/${item.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "")}`;
+              const path = item === 'Início' ? '/' : `/${item === 'Estoque' ? 'estoque' : item.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "")}`;
               const isActive = location.pathname === path;
               return (
-                <Link 
+                <Link
                   key={item}
-                  to={path} 
+                  to={path}
                   className={`relative font-bold text-[11px] uppercase tracking-[0.2em] transition-all hover:text-primary ${isActive ? 'text-primary' : 'text-slate-600 dark:text-slate-400'}`}
                 >
                   {item}
@@ -60,13 +65,13 @@ const Header: React.FC = () => {
               );
             })}
           </div>
-          
+
           <div className="flex items-center gap-4">
             <button onClick={toggleTheme} className="w-10 h-10 rounded-xl bg-slate-100 dark:bg-white/5 flex items-center justify-center hover:bg-primary/20 transition-all">
               <span className="material-icons-round text-lg dark:hidden block">dark_mode</span>
               <span className="material-icons-round text-lg hidden dark:block text-primary">light_mode</span>
             </button>
-            
+
             <Link to="/contact" className="bg-primary text-black font-black py-3 px-8 rounded-xl hover:bg-white hover:scale-105 transition-all uppercase text-[10px] tracking-widest shadow-xl shadow-primary/20">
               Fale Conosco
             </Link>
@@ -88,46 +93,66 @@ const Footer: React.FC = () => {
               Elevando a experiência de compra automotiva através de paixão, transparência e uma curadoria dos melhores veículos.
             </p>
           </div>
-          
+
           <div>
             <h5 className="font-display font-bold mb-8 text-slate-900 dark:text-white uppercase text-[10px] tracking-[0.3em] opacity-50">Navegação</h5>
             <ul className="space-y-4 text-slate-600 dark:text-slate-400 text-xs font-bold uppercase tracking-wider">
-              <li><Link to="/inventory" className="hover:text-primary transition-colors">Nosso Estoque</Link></li>
+              <li><Link to="/estoque" className="hover:text-primary transition-colors">Nosso Estoque</Link></li>
               <li><Link to="/contact" className="hover:text-primary transition-colors">Venda seu Veículo</Link></li>
               <li><Link to="/" className="hover:text-primary transition-colors">Financiamento</Link></li>
               <li><Link to="/about" className="hover:text-primary transition-colors">Sobre Nós</Link></li>
             </ul>
           </div>
-          
+
           <div>
             <h5 className="font-display font-bold mb-8 text-slate-900 dark:text-white uppercase text-[10px] tracking-[0.3em] opacity-50">Localização</h5>
             <p className="text-slate-600 dark:text-slate-400 mb-4 text-sm font-medium">
-              Curitiba, PR - Brasil
+              Rua Chile 578, Timbó - SC - Brasil
             </p>
             <p className="text-slate-500 dark:text-slate-400 text-xs">
               Seg - Sex: 09:00 - 18:00<br />
               Sáb: 09:00 - 13:00
             </p>
           </div>
-          
+
           <div>
             <h5 className="font-display font-bold mb-8 text-slate-900 dark:text-white uppercase text-[10px] tracking-[0.3em] opacity-50">Atendimento</h5>
             <div className="space-y-4">
-              <a href="tel:+5541999999999" className="text-2xl font-black text-slate-900 dark:text-white hover:text-primary transition-colors block leading-none">+55 (41) 9999-9999</a>
+              <a href="tel:+5547992212581" className="text-2xl font-black text-slate-900 dark:text-white hover:text-primary transition-colors block leading-none">+55 (47) 99221-2581</a>
               <div className="flex gap-4">
-                {['share', 'camera_alt', 'play_circle'].map(icon => (
-                  <a key={icon} href="#" className="w-10 h-10 rounded-xl bg-slate-100 dark:bg-white/5 flex items-center justify-center hover:bg-primary hover:text-black transition-all">
-                    <span className="material-icons-round text-sm">{icon}</span>
-                  </a>
-                ))}
+                <a
+                  href="https://www.instagram.com/f.p.veiculos/"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="w-10 h-10 rounded-xl bg-slate-100 dark:bg-white/5 flex items-center justify-center hover:bg-[#E1306C] hover:text-white transition-all text-slate-600 dark:text-slate-400"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect>
+                    <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path>
+                    <line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line>
+                  </svg>
+                </a>
+                <a
+                  href="https://www.facebook.com/fellipepeickerveiculos"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="w-10 h-10 rounded-xl bg-slate-100 dark:bg-white/5 flex items-center justify-center hover:bg-[#1877F2] hover:text-white transition-all text-slate-600 dark:text-slate-400"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"></path>
+                  </svg>
+                </a>
               </div>
             </div>
           </div>
         </div>
-        
+
         <div className="pt-12 border-t border-slate-100 dark:border-white/5 text-center">
-          <p className="text-[9px] text-slate-400 dark:text-slate-500 uppercase tracking-[0.4em] font-medium">
+          <p className="text-[9px] text-slate-400 dark:text-slate-500 uppercase tracking-[0.4em] font-medium mb-2">
             © 2024 Fellipe Peicker Veículos. ONDE A QUALIDADE ENCONTRA A ESTRADA.
+          </p>
+          <p className="text-[9px] text-slate-400 dark:text-slate-500 uppercase tracking-[0.2em] font-medium opacity-50">
+            CNPJ: 63.635.777/0001-42
           </p>
         </div>
       </div>
@@ -144,9 +169,9 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
       </main>
       <Footer />
       {/* Botão flutuante do WhatsApp */}
-      <a 
-        href="https://wa.me/5541999999999" 
-        target="_blank" 
+      <a
+        href="https://wa.me/5547992212581"
+        target="_blank"
         rel="noopener noreferrer"
         className="fixed bottom-8 right-8 z-[60] bg-[#25D366] text-white p-5 rounded-2xl shadow-2xl hover:scale-110 active:scale-95 transition-all animate-bounce-slow flex items-center justify-center group"
       >
