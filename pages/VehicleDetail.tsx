@@ -65,7 +65,8 @@ const VehicleDetail: React.FC = () => {
                 <img
                   src={images[activeImage] || 'https://placehold.co/800x600?text=Sem+Imagem'}
                   alt={car.modelo}
-                  className="w-full h-full object-cover transition-all duration-700"
+                  className="w-full h-full object-cover transition-all duration-700 cursor-pointer"
+                  onClick={() => window.open(images[activeImage], '_blank')}
                   onError={(e) => {
                     e.currentTarget.src = 'https://images.unsplash.com/photo-1492144534655-ae79c964c9d7?auto=format&fit=crop&q=90&w=1200';
                   }}
