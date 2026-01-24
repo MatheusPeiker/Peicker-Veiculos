@@ -8,7 +8,7 @@ export interface Veiculo {
   cambio: string;
   combustivel: string;
   tipo: string;
-  imagem_url: string;
+  imagem_url: string | string[];
   isFeatured?: boolean; // Optional, added for frontend compatibility if needed
 }
 

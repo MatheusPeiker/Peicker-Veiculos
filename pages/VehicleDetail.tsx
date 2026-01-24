@@ -59,9 +59,13 @@ const VehicleDetail: React.FC = () => {
 
   if (!car) return <Navigate to="/estoque" />;
 
-  // Create an array of images for the gallery logic (currently supports 1 image from DB)
-  // If you add an 'images' column to Supabase later, you can map it here.
-  const images = [car.imagem_url];
+  // Parse images from string (newline separated) or array
+  const images = React.useMemo(() => {
+    if (!car.imagem_url) return [];
+    if (Array.isArray(car.imagem_url)) return car.imagem_url;
+    // Split by newline or comma to be safe, filter empty strings
+    return car.imagem_url.split(/[\n,]/).map(url => url.trim()).filter(url => url.length > 0);
+  }, [car.imagem_url]);
 
   return (
     <div className="pt-32 pb-24 px-4 bg-background-light dark:bg-background-dark min-h-screen">
@@ -78,20 +82,37 @@ const VehicleDetail: React.FC = () => {
           {/* Main Content (Images + Description) */}
           <div className="lg:col-span-2 space-y-8">
             <div className="relative group">
-              <div className="aspect-[16/9] rounded-[40px] overflow-hidden bg-slate-200 dark:bg-surface-dark shadow-2xl">
-                <img
-                  src={images[activeImage] || 'https://placehold.co/800x600?text=Sem+Imagem'}
-                  alt={car.modelo}
-                  className="w-full h-full object-cover transition-all duration-700 cursor-pointer"
-                  onClick={() => window.open(images[activeImage], '_blank')}
-                  onError={(e) => {
-                    e.currentTarget.src = 'https://images.unsplash.com/photo-1492144534655-ae79c964c9d7?auto=format&fit=crop&q=90&w=1200';
-                  }}
-                />
+              <div
+                className="aspect-[16/9] rounded-[40px] overflow-hidden bg-slate-200 dark:bg-surface-dark shadow-2xl relative"
+              >
+                {/* Carousel Container */}
+                <div className="w-full h-full flex overflow-x-auto snap-x snap-mandatory scrollbar-hide" style={{ scrollBehavior: 'smooth' }}>
+                  {(images.length > 0 ? images : ['https://placehold.co/800x600?text=Sem+Imagem']).map((img, idx) => (
+                    <div key={idx} className="w-full h-full flex-shrink-0 snap-center relative">
+                      <img
+                        src={img}
+                        alt={`${car.modelo} - Foto ${idx + 1}`}
+                        className="w-full h-full object-cover cursor-pointer"
+                        onClick={() => window.open(img, '_blank')}
+                        onError={(e) => {
+                          e.currentTarget.src = 'https://images.unsplash.com/photo-1492144534655-ae79c964c9d7?auto=format&fit=crop&q=90&w=1200';
+                        }}
+                      />
+                    </div>
+                  ))}
+                </div>
+
               </div>
-              <div className="absolute bottom-6 right-6 glass-effect text-white px-4 py-2 rounded-full text-[10px] font-bold uppercase tracking-widest border border-white/10 flex items-center gap-2">
+              <div className="absolute bottom-6 right-6 glass-effect text-white px-4 py-2 rounded-full text-[10px] font-bold uppercase tracking-widest border border-white/10 flex items-center gap-2 pointer-events-none">
                 <span className="material-icons-round text-sm">photo_library</span>
-                {activeImage + 1} / {images.length} Fotos
+                {images.length} Fotos
+              </div>
+
+              {/* Hint for interaction */}
+              <div className="absolute inset-0 flex items-center justify-center pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity duration-500">
+                <div className="bg-black/50 backdrop-blur-md text-white px-4 py-2 rounded-full text-[10px] font-bold uppercase tracking-widest">
+                  Arraste para o lado
+                </div>
               </div>
             </div>
 
@@ -100,14 +121,22 @@ const VehicleDetail: React.FC = () => {
                 {images.map((img, i) => (
                   <button
                     key={i}
-                    onClick={() => setActiveImage(i)}
-                    className={`aspect-video rounded-2xl overflow-hidden border-2 transition-all ${activeImage === i ? 'border-primary ring-4 ring-primary/20 scale-105' : 'border-transparent opacity-60 hover:opacity-100'}`}
+                    onClick={() => {
+                      // Find the carousel container and scroll
+                      const container = document.querySelector('.snap-x');
+                      if (container) {
+                        const width = container.clientWidth;
+                        container.scrollTo({ left: width * i, behavior: 'smooth' });
+                      }
+                    }}
+                    className={`aspect-video rounded-2xl overflow-hidden border-2 transition-all border-transparent opacity-60 hover:opacity-100 hover:scale-105`}
                   >
-                    <img src={img} alt={`${car.modelo} view ${i}`} className="w-full h-full object-cover" />
+                    <img src={img} alt={`${car.modelo} thumbnail ${i}`} className="w-full h-full object-cover" />
                   </button>
                 ))}
               </div>
             )}
+
 
             <div className="bg-white dark:bg-surface-dark p-10 rounded-[40px] border border-slate-200 dark:border-white/5 shadow-sm">
               <h2 className="text-2xl font-display font-black mb-8 dark:text-white uppercase italic tracking-tighter flex items-center gap-4">
