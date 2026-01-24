@@ -21,10 +21,13 @@ const ContactPlaceholder = () => (
   </div>
 );
 
+import ScrollToTop from './src/components/ScrollToTop';
+
 const App: React.FC = () => {
   return (
     <ErrorBoundary>
       <Router>
+        <ScrollToTop />
         <Layout>
           <Routes>
             <Route path="/" element={<Home />} />

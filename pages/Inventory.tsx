@@ -255,7 +255,16 @@ const Inventory: React.FC = () => {
                     className="group bg-white dark:bg-surface-dark rounded-[40px] overflow-hidden border border-slate-200 dark:border-white/5 transition-all hover:border-primary/50 hover:shadow-2xl flex flex-col h-full"
                   >
                     <div className="relative aspect-[4/3] overflow-hidden">
-                      <img src={car.imagem_url} alt={car.modelo} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" />
+                      <img
+                        src={car.imagem_url}
+                        alt={car.modelo}
+                        className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700 cursor-pointer"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          window.open(car.imagem_url, '_blank');
+                        }}
+                      />
                       <div className="absolute top-6 right-6 flex flex-col gap-2">
                         <button className="w-10 h-10 rounded-full bg-black/40 backdrop-blur-md flex items-center justify-center text-white hover:text-primary transition-colors">
                           <span className="material-icons-round text-sm">favorite_border</span>
