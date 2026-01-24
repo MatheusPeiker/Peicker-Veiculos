@@ -10,6 +10,14 @@ const VehicleDetail: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [activeImage, setActiveImage] = useState(0);
 
+  // Parse images from string (newline separated) or array
+  const images = React.useMemo(() => {
+    if (!car || !car.imagem_url) return [];
+    if (Array.isArray(car.imagem_url)) return car.imagem_url;
+    // Split by newline or comma to be safe, filter empty strings
+    return car.imagem_url.split(/[\n,]/).map(url => url.trim()).filter(url => url.length > 0);
+  }, [car]);
+
   const fetchCar = async () => {
     if (!id) return;
     // Don't set loading true here to avoid flashing content on re-focus
@@ -59,13 +67,7 @@ const VehicleDetail: React.FC = () => {
 
   if (!car) return <Navigate to="/estoque" />;
 
-  // Parse images from string (newline separated) or array
-  const images = React.useMemo(() => {
-    if (!car.imagem_url) return [];
-    if (Array.isArray(car.imagem_url)) return car.imagem_url;
-    // Split by newline or comma to be safe, filter empty strings
-    return car.imagem_url.split(/[\n,]/).map(url => url.trim()).filter(url => url.length > 0);
-  }, [car.imagem_url]);
+
 
   return (
     <div className="pt-32 pb-24 px-4 bg-background-light dark:bg-background-dark min-h-screen">
