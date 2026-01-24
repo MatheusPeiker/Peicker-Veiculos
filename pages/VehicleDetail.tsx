@@ -10,25 +10,42 @@ const VehicleDetail: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [activeImage, setActiveImage] = useState(0);
 
-  useEffect(() => {
-    const fetchCar = async () => {
-      if (!id) return;
-      setLoading(true);
-      const { data, error } = await supabase
-        .from('veiculos')
-        .select('*')
-        .eq('id', id)
-        .single();
+  const fetchCar = async () => {
+    if (!id) return;
+    // Don't set loading true here to avoid flashing content on re-focus
+    // setLoading(true);
+    const { data, error } = await supabase
+      .from('veiculos')
+      .select('*')
+      .eq('id', id)
+      .single();
 
-      if (error) {
-        console.error('Error fetching vehicle:', error);
-      } else {
-        setCar(data);
-      }
-      setLoading(false);
+    if (error) {
+      console.error('Error fetching vehicle:', error);
+    } else {
+      setCar(data);
+    }
+    setLoading(false);
+  };
+
+  useEffect(() => {
+    fetchCar();
+
+    const handleFocus = () => {
+      fetchCar();
     };
 
-    fetchCar();
+    window.addEventListener('focus', handleFocus);
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'visible') {
+        fetchCar();
+      }
+    });
+
+    return () => {
+      window.removeEventListener('focus', handleFocus);
+      document.removeEventListener('visibilitychange', handleFocus);
+    };
   }, [id]);
 
   if (loading) {

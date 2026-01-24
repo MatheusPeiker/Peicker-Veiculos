@@ -16,22 +16,42 @@ const Inventory: React.FC = () => {
   const [maxPrice, setMaxPrice] = useState<number>(500000);
 
   // Fetch data from Supabase
-  useEffect(() => {
-    const fetchCars = async () => {
-      setLoading(true);
-      const { data, error } = await supabase
-        .from('veiculos')
-        .select('*');
+  // Fetch data from Supabase
+  const fetchCars = async () => {
+    // Optional: Only show loading on initial load, or if you want to show it every time
+    // setLoading(true); 
 
-      if (error) {
-        console.error('Error fetching vehicles:', error);
-      } else {
-        setCars(data || []);
-      }
-      setLoading(false);
+    const { data, error } = await supabase
+      .from('veiculos')
+      .select('*');
+
+    if (error) {
+      console.error('Error fetching vehicles:', error);
+    } else {
+      setCars(data || []);
+    }
+    setLoading(false);
+  };
+
+  useEffect(() => {
+    fetchCars();
+
+    const handleFocus = () => {
+      fetchCars();
     };
 
-    fetchCars();
+    window.addEventListener('focus', handleFocus);
+    // Also listen for visibility change (e.g. switching tabs without losing window focus in some browsers)
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'visible') {
+        fetchCars();
+      }
+    });
+
+    return () => {
+      window.removeEventListener('focus', handleFocus);
+      document.removeEventListener('visibilitychange', handleFocus);
+    };
   }, []);
 
   // Update filter if URL param changes
