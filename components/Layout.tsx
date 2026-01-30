@@ -14,13 +14,6 @@ const Logo: React.FC<{ isScrolled?: boolean; variant?: 'header' | 'footer' }> = 
     ? (isScrolled ? 'h-16 md:h-20' : 'h-20 md:h-28') // Reduced max height slightly for better proportions
     : 'h-16 md:h-24'; // Footer size
 
-  // Filter logic for visibility
-  // - Header Top: Always White (on dark hero) -> brightness-0 invert
-  // - Header Scrolled / Footer: Auto (Black on Light, White on Dark) -> dark:invert (assuming black source)
-  const filterClass = (variant === 'header' && !isScrolled)
-    ? 'brightness-0 invert'
-    : 'dark:invert dark:brightness-0';
-
   return (
     <Link
       to="/"
@@ -30,7 +23,7 @@ const Logo: React.FC<{ isScrolled?: boolean; variant?: 'header' | 'footer' }> = 
         <img
           src={logo}
           alt="Fellipe Peicker Veículos"
-          className={`h-full w-auto object-contain transition-all duration-500 group-hover:scale-105 ${filterClass}`}
+          className="h-full w-auto object-contain transition-all duration-500 group-hover:scale-105"
           onError={() => setHasError(true)}
         />
       ) : (

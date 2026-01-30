@@ -21,8 +21,17 @@ const Inventory: React.FC = () => {
   // Helper for consistent brand casing
   const capitalize = (str: string) => {
     if (!str) return '';
-    // Handle special cases if necessary, or just simple capitalization
-    return str.charAt(0).toUpperCase() + str.slice(1);
+    const trimmed = str.trim();
+    const lower = trimmed.toLowerCase();
+
+    // Acronyms that should remain uppercase
+    const acronyms = ['bmw', 'vw', 'gm', 'byd', 'gwm', 'ram', 'jac', 'jlr'];
+    if (acronyms.includes(lower)) {
+      return lower.toUpperCase();
+    }
+
+    // Title Case for others
+    return lower.charAt(0).toUpperCase() + lower.slice(1);
   };
 
   const [filterBrand, setFilterBrand] = useState<string>(capitalize(searchParams.get('brand') || 'All'));
@@ -81,7 +90,7 @@ const Inventory: React.FC = () => {
 
   const filteredCars = useMemo(() => {
     return cars.filter(car => {
-      const matchesBrand = filterBrand === 'All' || (car.marca && car.marca.toLowerCase() === filterBrand.toLowerCase());
+      const matchesBrand = filterBrand === 'All' || (car.marca && car.marca.trim().toLowerCase() === filterBrand.toLowerCase());
       const matchesFuel = filterFuel === 'All' ||
         (filterFuel === 'Gasolina/Flex' ? (car.combustivel === 'Gasolina' || car.combustivel === 'Flex') : car.combustivel === filterFuel);
       const matchesTransmission = filterTransmission === 'All' || car.cambio === filterTransmission;

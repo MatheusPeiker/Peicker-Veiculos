@@ -77,7 +77,7 @@ const findLogoUrl = (brand: string): string | null => {
     return null;
 };
 
-const BrandItem = ({ brand }: { brand: string }) => {
+const BrandItem: React.FC<{ brand: string }> = ({ brand }) => {
     const logoUrl = findLogoUrl(brand);
     const [imgError, setImgError] = useState(false);
 
@@ -113,8 +113,18 @@ export const BrandCarousel: React.FC = () => {
             if (data) {
                 const uniqueBrands = Array.from(new Set(data.map(v => {
                     const brand = v.marca || '';
-                    return brand.charAt(0).toUpperCase() + brand.slice(1);
-                }))).sort();
+                    if (!brand) return '';
+
+                    const trimmed = brand.trim();
+                    const lower = trimmed.toLowerCase();
+                    const acronyms = ['bmw', 'vw', 'gm', 'byd', 'gwm', 'ram', 'jac', 'jlr'];
+
+                    if (acronyms.includes(lower)) {
+                        return lower.toUpperCase();
+                    }
+
+                    return lower.charAt(0).toUpperCase() + lower.slice(1);
+                }))).filter(Boolean).sort();
                 setAvailableBrands(uniqueBrands);
             }
         };
