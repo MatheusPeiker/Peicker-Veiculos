@@ -3,25 +3,39 @@ import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import logo from '@/src/assets/logo.png';
 
-const Logo: React.FC<{ isScrolled?: boolean }> = ({ isScrolled = false }) => {
+const Logo: React.FC<{ isScrolled?: boolean; variant?: 'header' | 'footer' }> = ({
+  isScrolled = false,
+  variant = 'footer'
+}) => {
   const [hasError, setHasError] = useState(false);
+
+  // Determine container height based on variant and state
+  const containerHeight = variant === 'header'
+    ? (isScrolled ? 'h-16 md:h-20' : 'h-20 md:h-28') // Reduced max height slightly for better proportions
+    : 'h-16 md:h-24'; // Footer size
+
+  // Filter logic for visibility
+  // - Header Top: Always White (on dark hero) -> brightness-0 invert
+  // - Header Scrolled / Footer: Auto (Black on Light, White on Dark) -> dark:invert (assuming black source)
+  const filterClass = (variant === 'header' && !isScrolled)
+    ? 'brightness-0 invert'
+    : 'dark:invert dark:brightness-0';
 
   return (
     <Link
       to="/"
-      className={`flex-shrink-0 flex items-center group transition-all duration-500 ${isScrolled ? 'h-16 md:h-20' : 'h-28 md:h-36'
-        }`}
+      className={`flex-shrink-0 flex items-center group transition-all duration-500 ${containerHeight}`}
     >
       {!hasError ? (
         <img
           src={logo}
           alt="Fellipe Peicker Veículos"
-          className="h-full w-auto object-contain transition-transform group-hover:scale-105 duration-500"
+          className={`h-full w-auto object-contain transition-all duration-500 group-hover:scale-105 ${filterClass}`}
           onError={() => setHasError(true)}
         />
       ) : (
-        <div className="flex flex-col -space-y-1">
-          <span className="font-display font-black text-xl md:text-2xl dark:text-white leading-none">PEICKER</span>
+        <div className={`flex flex-col -space-y-1 ${variant === 'header' && !isScrolled ? 'text-white' : 'text-slate-900 dark:text-white'}`}>
+          <span className="font-display font-black text-xl md:text-2xl leading-none">PEICKER</span>
           <span className="font-display font-bold text-[8px] md:text-[10px] tracking-[0.3em] text-primary uppercase leading-none">VEÍCULOS</span>
         </div>
       )}
@@ -47,7 +61,7 @@ const Header: React.FC = () => {
   return (
     <nav className={`fixed w-full z-50 transition-all duration-500 ${isScrolled ? 'bg-white/95 dark:bg-background-dark/95 backdrop-blur-xl border-b border-slate-200 dark:border-white/5 h-20' : 'bg-transparent h-36'}`}>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-full flex items-center justify-between">
-        <Logo isScrolled={isScrolled} />
+        <Logo isScrolled={isScrolled} variant="header" />
 
         {/* Desktop Menu */}
         <div className="hidden md:flex items-center space-x-10">
@@ -58,11 +72,14 @@ const Header: React.FC = () => {
               else if (item === 'Contato') path = '/contact';
 
               const isActive = location.pathname === path;
+              const textColor = isScrolled ? 'text-slate-600 dark:text-slate-400' : 'text-white/80 hover:text-white';
+              const activeColor = isScrolled ? 'text-primary' : 'text-primary';
+
               return (
                 <Link
                   key={item}
                   to={path}
-                  className={`relative font-bold text-[11px] uppercase tracking-[0.2em] transition-all hover:text-primary ${isActive ? 'text-primary' : 'text-slate-600 dark:text-slate-400'}`}
+                  className={`relative font-bold text-[11px] uppercase tracking-[0.2em] transition-all hover:text-primary ${isActive ? activeColor : textColor}`}
                 >
                   {item}
                   {isActive && <span className="absolute -bottom-2 left-0 w-full h-0.5 bg-primary animate-scale-x"></span>}
@@ -72,7 +89,7 @@ const Header: React.FC = () => {
           </div>
 
           <div className="flex items-center gap-4">
-            <button onClick={toggleTheme} className="w-10 h-10 rounded-xl bg-slate-100 dark:bg-white/5 flex items-center justify-center hover:bg-primary/20 transition-all">
+            <button onClick={toggleTheme} className={`w-10 h-10 rounded-xl flex items-center justify-center hover:bg-primary/20 transition-all ${isScrolled ? 'bg-slate-100 dark:bg-white/5' : 'bg-white/10 text-white hover:bg-white/20'}`}>
               <span className="material-icons-round text-lg dark:hidden block">dark_mode</span>
               <span className="material-icons-round text-lg hidden dark:block text-primary">light_mode</span>
             </button>
@@ -85,13 +102,13 @@ const Header: React.FC = () => {
 
         {/* Mobile Menu Button */}
         <div className="md:hidden flex items-center gap-4">
-          <button onClick={toggleTheme} className="w-10 h-10 rounded-xl bg-slate-100 dark:bg-white/5 flex items-center justify-center hover:bg-primary/20 transition-all">
+          <button onClick={toggleTheme} className={`w-10 h-10 rounded-xl flex items-center justify-center hover:bg-primary/20 transition-all ${isScrolled ? 'bg-slate-100 dark:bg-white/5' : 'bg-white/10 text-white hover:bg-white/20'}`}>
             <span className="material-icons-round text-lg dark:hidden block">dark_mode</span>
             <span className="material-icons-round text-lg hidden dark:block text-primary">light_mode</span>
           </button>
           <button
             onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-            className="w-10 h-10 rounded-xl bg-slate-100 dark:bg-white/5 flex items-center justify-center text-slate-900 dark:text-white"
+            className={`w-10 h-10 rounded-xl flex items-center justify-center ${isScrolled ? 'bg-slate-100 dark:bg-white/5 text-slate-900 dark:text-white' : 'bg-white/10 text-white'}`}
           >
             <span className="material-icons-round">{isMobileMenuOpen ? 'close' : 'menu'}</span>
           </button>

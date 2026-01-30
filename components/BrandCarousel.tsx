@@ -77,6 +77,32 @@ const findLogoUrl = (brand: string): string | null => {
     return null;
 };
 
+const BrandItem = ({ brand }: { brand: string }) => {
+    const logoUrl = findLogoUrl(brand);
+    const [imgError, setImgError] = useState(false);
+
+    return (
+        <Link
+            to={`/estoque?brand=${brand}`}
+            className="brand-logo-item"
+        >
+            {logoUrl && !imgError ? (
+                <img
+                    src={logoUrl}
+                    alt={brand}
+                    className="h-12 w-auto object-contain dark:invert"
+                    draggable="false"
+                    onError={() => setImgError(true)}
+                />
+            ) : (
+                <span className="font-black text-xl uppercase italic text-slate-500 dark:text-white whitespace-nowrap">
+                    {brand}
+                </span>
+            )}
+        </Link>
+    );
+};
+
 export const BrandCarousel: React.FC = () => {
     const [availableBrands, setAvailableBrands] = useState<string[]>([]);
     const [isPaused, setIsPaused] = useState(false);
@@ -85,7 +111,10 @@ export const BrandCarousel: React.FC = () => {
         const fetchBrands = async () => {
             const { data } = await supabase.from('veiculos').select('marca');
             if (data) {
-                const uniqueBrands = Array.from(new Set(data.map(v => v.marca))).sort();
+                const uniqueBrands = Array.from(new Set(data.map(v => {
+                    const brand = v.marca || '';
+                    return brand.charAt(0).toUpperCase() + brand.slice(1);
+                }))).sort();
                 setAvailableBrands(uniqueBrands);
             }
         };
@@ -93,32 +122,6 @@ export const BrandCarousel: React.FC = () => {
     }, []);
 
     if (availableBrands.length === 0) return null;
-
-    const BrandItem = ({ brand }: { brand: string }) => {
-        const logoUrl = findLogoUrl(brand);
-        const [imgError, setImgError] = useState(false);
-
-        return (
-            <Link
-                to={`/estoque?brand=${brand}`}
-                className="brand-logo-item"
-            >
-                {logoUrl && !imgError ? (
-                    <img
-                        src={logoUrl}
-                        alt={brand}
-                        className="h-12 w-auto object-contain dark:invert"
-                        draggable="false"
-                        onError={() => setImgError(true)}
-                    />
-                ) : (
-                    <span className="font-black text-xl uppercase italic text-slate-500 dark:text-white whitespace-nowrap">
-                        {brand}
-                    </span>
-                )}
-            </Link>
-        );
-    };
 
     return (
         <div
