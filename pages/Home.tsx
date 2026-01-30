@@ -89,7 +89,14 @@ const Home: React.FC = () => {
               >
                 <div className="relative aspect-[4/3] overflow-hidden">
                   <img
-                    src={car.imagem_url || 'https://placehold.co/600x400?text=Sem+Imagem'}
+                    src={(() => {
+                      // Extract first valid image URL
+                      if (!car.imagem_url) return 'https://placehold.co/600x400?text=Sem+Imagem';
+                      if (Array.isArray(car.imagem_url)) return car.imagem_url[0] || 'https://placehold.co/600x400?text=Sem+Imagem';
+                      // Split by newline or comma, get first trimmed URL
+                      const firstUrl = car.imagem_url.split(/[\r\n,]+/)[0]?.trim();
+                      return firstUrl || 'https://placehold.co/600x400?text=Sem+Imagem';
+                    })()}
                     alt={car.modelo}
                     className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-1000"
                     onError={(e) => {

@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useParams, Link, Navigate } from 'react-router-dom';
 import { supabase } from '../src/lib/supabase';
 import { Veiculo } from '../types';
@@ -9,13 +9,15 @@ const VehicleDetail: React.FC = () => {
   const [car, setCar] = useState<Veiculo | null>(null);
   const [loading, setLoading] = useState(true);
   const [activeImage, setActiveImage] = useState(0);
+  const [isLightboxOpen, setIsLightboxOpen] = useState(false);
+  const touchStartY = useRef(0);
 
   // Parse images from string (newline separated) or array
   const images = React.useMemo(() => {
     if (!car || !car.imagem_url) return [];
     if (Array.isArray(car.imagem_url)) return car.imagem_url;
-    // Split by newline or comma to be safe, filter empty strings
-    return car.imagem_url.split(/[\n,]/).map(url => url.trim()).filter(url => url.length > 0);
+    // Split by newline (handling \r\n or \n) or comma, then clean up
+    return car.imagem_url.split(/[\r\n,]+/).map(url => url.trim()).filter(url => url.length > 0);
   }, [car]);
 
   const fetchCar = async () => {
@@ -56,6 +58,38 @@ const VehicleDetail: React.FC = () => {
     };
   }, [id]);
 
+  // Keyboard navigation for Lightbox
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (!isLightboxOpen) return;
+
+      if (e.key === 'Escape') {
+        setIsLightboxOpen(false);
+      } else if (e.key === 'ArrowLeft') {
+        setActiveImage((prev) => (prev > 0 ? prev - 1 : images.length - 1));
+      } else if (e.key === 'ArrowRight') {
+        setActiveImage((prev) => (prev < images.length - 1 ? prev + 1 : 0));
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isLightboxOpen, images.length]);
+
+  const handleTouchStart = (e: React.TouchEvent) => {
+    touchStartY.current = e.touches[0].clientY;
+  };
+
+  const handleTouchEnd = (e: React.TouchEvent) => {
+    const touchEndY = e.changedTouches[0].clientY;
+    const diff = touchEndY - touchStartY.current;
+
+    // Swipe down threshold (e.g. 100px)
+    if (diff > 100) {
+      setIsLightboxOpen(false);
+    }
+  };
+
   if (loading) {
     return (
       <div className="pt-32 pb-24 text-center min-h-screen">
@@ -71,6 +105,48 @@ const VehicleDetail: React.FC = () => {
 
   return (
     <div className="pt-32 pb-24 px-4 bg-background-light dark:bg-background-dark min-h-screen">
+      {/* Lightbox Overlay */}
+      {isLightboxOpen && (
+        <div
+          className="fixed inset-0 z-[9999] bg-black/95 backdrop-blur-xl flex items-center justify-center p-4"
+          onTouchStart={handleTouchStart}
+          onTouchEnd={handleTouchEnd}
+        >
+          <button
+            onClick={() => setIsLightboxOpen(false)}
+            className="absolute top-6 right-6 w-12 h-12 bg-white/10 rounded-full flex items-center justify-center text-white hover:bg-white/20 transition-all z-50"
+          >
+            <span className="material-icons-round">close</span>
+          </button>
+          <button
+            onClick={(e) => { e.stopPropagation(); setActiveImage(prev => prev > 0 ? prev - 1 : images.length - 1); }}
+            className="absolute left-4 top-1/2 -translate-y-1/2 w-12 h-12 bg-white/10 rounded-full flex items-center justify-center text-white hover:bg-white/20 transition-all z-50 hidden md:flex"
+          >
+            <span className="material-icons-round">arrow_back_ios_new</span>
+          </button>
+          <button
+            onClick={(e) => { e.stopPropagation(); setActiveImage(prev => prev < images.length - 1 ? prev + 1 : 0); }}
+            className="absolute right-4 top-1/2 -translate-y-1/2 w-12 h-12 bg-white/10 rounded-full flex items-center justify-center text-white hover:bg-white/20 transition-all z-50 hidden md:flex"
+          >
+            <span className="material-icons-round">arrow_forward_ios</span>
+          </button>
+
+          <img
+            src={images[activeImage]}
+            className="max-w-full max-h-[90vh] object-contain rounded-lg shadow-2xl"
+            alt="Full screen view"
+          />
+
+          <div className="absolute bottom-10 left-1/2 -translate-x-1/2 text-white/50 text-sm font-bold uppercase tracking-widest">
+            {activeImage + 1} / {images.length}
+          </div>
+
+          <div className="absolute top-6 left-6 text-white/30 text-[10px] font-bold uppercase tracking-widest md:hidden animate-pulse">
+            Arraste para baixo para fechar
+          </div>
+        </div>
+      )}
+
       <div className="max-w-7xl mx-auto">
         <nav className="flex mb-8 text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">
           <Link to="/" className="hover:text-primary">Início</Link>
@@ -88,14 +164,22 @@ const VehicleDetail: React.FC = () => {
                 className="aspect-[16/9] rounded-[40px] overflow-hidden bg-slate-200 dark:bg-surface-dark shadow-2xl relative"
               >
                 {/* Carousel Container */}
-                <div className="w-full h-full flex overflow-x-auto snap-x snap-mandatory scrollbar-hide" style={{ scrollBehavior: 'smooth' }}>
+                <div
+                  className="w-full h-full flex overflow-x-auto snap-x snap-mandatory scrollbar-hide"
+                  style={{ scrollBehavior: 'smooth' }}
+                  onScroll={(e) => {
+                    const container = e.currentTarget;
+                    const index = Math.round(container.scrollLeft / container.clientWidth);
+                    setActiveImage(index);
+                  }}
+                >
                   {(images.length > 0 ? images : ['https://placehold.co/800x600?text=Sem+Imagem']).map((img, idx) => (
                     <div key={idx} className="w-full h-full flex-shrink-0 snap-center relative">
                       <img
                         src={img}
                         alt={`${car.modelo} - Foto ${idx + 1}`}
                         className="w-full h-full object-cover cursor-pointer"
-                        onClick={() => window.open(img, '_blank')}
+                        onClick={() => setIsLightboxOpen(true)}
                         onError={(e) => {
                           e.currentTarget.src = 'https://images.unsplash.com/photo-1492144534655-ae79c964c9d7?auto=format&fit=crop&q=90&w=1200';
                         }}
@@ -110,10 +194,35 @@ const VehicleDetail: React.FC = () => {
                 {images.length} Fotos
               </div>
 
+              <div className="absolute inset-0 flex items-center justify-between px-4 pointer-events-none">
+                <button
+                  onClick={() => {
+                    const container = document.querySelector('.snap-x');
+                    if (container) {
+                      container.scrollBy({ left: -container.clientWidth, behavior: 'smooth' });
+                    }
+                  }}
+                  className="w-10 h-10 rounded-full bg-black/30 backdrop-blur-md text-white flex items-center justify-center hover:bg-black/50 transition-all pointer-events-auto"
+                >
+                  <span className="material-icons-round text-lg">arrow_back</span>
+                </button>
+                <button
+                  onClick={() => {
+                    const container = document.querySelector('.snap-x');
+                    if (container) {
+                      container.scrollBy({ left: container.clientWidth, behavior: 'smooth' });
+                    }
+                  }}
+                  className="w-10 h-10 rounded-full bg-black/30 backdrop-blur-md text-white flex items-center justify-center hover:bg-black/50 transition-all pointer-events-auto"
+                >
+                  <span className="material-icons-round text-lg">arrow_forward</span>
+                </button>
+              </div>
+
               {/* Hint for interaction */}
               <div className="absolute inset-0 flex items-center justify-center pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity duration-500">
                 <div className="bg-black/50 backdrop-blur-md text-white px-4 py-2 rounded-full text-[10px] font-bold uppercase tracking-widest">
-                  Arraste para o lado
+                  Arraste ou use as setas
                 </div>
               </div>
             </div>
@@ -222,13 +331,7 @@ const VehicleDetail: React.FC = () => {
               </div>
 
               <div className="bg-slate-100 dark:bg-surface-dark p-8 rounded-[40px] border border-slate-200 dark:border-white/5 text-center">
-                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4">Fale com um consultor</p>
-                <div className="flex justify-center -space-x-4 mb-6">
-                  {[1, 2, 3].map(i => (
-                    <img key={i} src={`https://picsum.photos/seed/consultant${i}/100/100`} className="w-12 h-12 rounded-full border-4 border-white dark:border-surface-dark shadow-lg" alt="Consultant" />
-                  ))}
-                  <div className="w-12 h-12 rounded-full bg-primary flex items-center justify-center text-[10px] font-black text-black border-4 border-white dark:border-surface-dark shadow-lg">+2</div>
-                </div>
+                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4">Fale com o nosso consultor</p>
                 <p className="text-xl font-black dark:text-white">(47) 99221-2581</p>
               </div>
             </div>

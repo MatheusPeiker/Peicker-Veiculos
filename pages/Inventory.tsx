@@ -8,6 +8,15 @@ const Inventory: React.FC = () => {
   const [cars, setCars] = useState<Veiculo[]>([]);
   const [loading, setLoading] = useState(true);
 
+  const [viewMode, setViewMode] = useState<'grid' | 'list'>(() => {
+    return (localStorage.getItem('inventoryViewMode') as 'grid' | 'list') || 'grid';
+  });
+
+  const handleViewModeChange = (mode: 'grid' | 'list') => {
+    setViewMode(mode);
+    localStorage.setItem('inventoryViewMode', mode);
+  };
+
   const [filterBrand, setFilterBrand] = useState<string>(searchParams.get('brand') || 'All');
   const [filterFuel, setFilterFuel] = useState<string>('All');
   const [filterTransmission, setFilterTransmission] = useState<string>('All');
@@ -16,11 +25,7 @@ const Inventory: React.FC = () => {
   const [maxPrice, setMaxPrice] = useState<number>(500000);
 
   // Fetch data from Supabase
-  // Fetch data from Supabase
   const fetchCars = async () => {
-    // Optional: Only show loading on initial load, or if you want to show it every time
-    // setLoading(true); 
-
     const { data, error } = await supabase
       .from('veiculos')
       .select('*');
@@ -93,24 +98,12 @@ const Inventory: React.FC = () => {
   return (
     <div className="pt-32 pb-32 px-4 bg-background-light dark:bg-background-dark min-h-screen">
       <div className="max-w-7xl mx-auto">
-        <header className="mb-16">
-          <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
-            <div className="space-y-4">
-              <span className="text-primary font-bold uppercase tracking-[0.5em] text-[10px] block">Catálogo</span>
-              <h1 className="text-5xl md:text-7xl font-display font-black uppercase tracking-tighter italic dark:text-white leading-none">
-                ESTOQUE DE <span className="text-primary">NAVES.</span>
-              </h1>
-            </div>
-            <p className="text-slate-500 dark:text-slate-400 font-light max-w-sm">
-              Cada veículo é selecionado individualmente por nossa equipe de especialistas, garantindo o padrão de excelência Peicker.
-            </p>
-          </div>
-        </header>
+        {/* ... header ... */}
 
         <div className="flex flex-col lg:flex-row gap-12">
           {/* Sidebar Filters */}
           <aside className="lg:w-80 space-y-8 flex-shrink-0">
-            <div className="bg-white dark:bg-surface-dark p-10 rounded-[40px] border border-slate-200 dark:border-white/5 shadow-sm sticky top-28">
+            <div className="bg-white dark:bg-surface-dark p-10 rounded-[40px] border border-slate-200 dark:border-white/5 shadow-sm sticky top-28 max-h-[calc(100vh-8rem)] overflow-y-auto custom-scrollbar">
               <div className="flex items-center justify-between mb-10">
                 <h2 className="font-display font-black text-xl dark:text-white uppercase tracking-tighter italic">Filtros</h2>
                 <button
@@ -255,8 +248,18 @@ const Inventory: React.FC = () => {
               <div className="flex items-center gap-4">
                 <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Visualização:</span>
                 <div className="flex bg-slate-100 dark:bg-white/5 p-1 rounded-xl">
-                  <button className="p-2 rounded-lg bg-white dark:bg-white/10 text-primary shadow-sm"><span className="material-icons-round text-sm">grid_view</span></button>
-                  <button className="p-2 rounded-lg text-slate-400 hover:text-primary transition-colors"><span className="material-icons-round text-sm">view_list</span></button>
+                  <button
+                    onClick={() => handleViewModeChange('grid')}
+                    className={`p-2 rounded-lg transition-colors ${viewMode === 'grid' ? 'bg-white dark:bg-white/10 text-primary shadow-sm' : 'text-slate-400 hover:text-primary'}`}
+                  >
+                    <span className="material-icons-round text-sm">grid_view</span>
+                  </button>
+                  <button
+                    onClick={() => handleViewModeChange('list')}
+                    className={`p-2 rounded-lg transition-colors ${viewMode === 'list' ? 'bg-white dark:bg-white/10 text-primary shadow-sm' : 'text-slate-400 hover:text-primary'}`}
+                  >
+                    <span className="material-icons-round text-sm">view_list</span>
+                  </button>
                 </div>
               </div>
             </div>
@@ -267,23 +270,23 @@ const Inventory: React.FC = () => {
                 <p className="text-slate-500 font-medium">Carregando estoque...</p>
               </div>
             ) : filteredCars.length > 0 ? (
-              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8">
+              <div className={`grid gap-8 ${viewMode === 'grid' ? 'grid-cols-1 md:grid-cols-2 xl:grid-cols-3' : 'grid-cols-1'}`}>
                 {filteredCars.map(car => (
                   <Link
                     key={car.id}
                     to={`/vehicle/${car.id}`}
-                    className="group bg-white dark:bg-surface-dark rounded-[40px] overflow-hidden border border-slate-200 dark:border-white/5 transition-all hover:border-primary/50 hover:shadow-2xl flex flex-col h-full"
+                    className={`group bg-white dark:bg-surface-dark rounded-[40px] overflow-hidden border border-slate-200 dark:border-white/5 transition-all duration-300 ease-in-out hover:-translate-y-2 hover:border-primary/50 hover:shadow-2xl flex ${viewMode === 'list' ? 'flex-col md:flex-row h-auto md:h-64' : 'flex-col h-full'}`}
                   >
-                    <div className="relative aspect-[4/3] overflow-hidden">
+                    <div className={`relative overflow-hidden ${viewMode === 'list' ? 'w-full md:w-80 h-64 md:h-full flex-shrink-0' : 'aspect-[4/3]'}`}>
                       <img
-                        src={car.imagem_url}
+                        src={(() => {
+                          if (!car.imagem_url) return 'https://placehold.co/600x400?text=Sem+Imagem';
+                          if (Array.isArray(car.imagem_url)) return car.imagem_url[0] || 'https://placehold.co/600x400?text=Sem+Imagem';
+                          const firstUrl = car.imagem_url.split(/[\r\n,]+/)[0]?.trim();
+                          return firstUrl || 'https://placehold.co/600x400?text=Sem+Imagem';
+                        })()}
                         alt={car.modelo}
-                        className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700 cursor-pointer"
-                        onClick={(e) => {
-                          e.preventDefault();
-                          e.stopPropagation();
-                          window.open(car.imagem_url, '_blank');
-                        }}
+                        className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
                       />
                       <div className="absolute top-6 right-6 flex flex-col gap-2">
                         <button className="w-10 h-10 rounded-full bg-black/40 backdrop-blur-md flex items-center justify-center text-white hover:text-primary transition-colors">
@@ -291,30 +294,32 @@ const Inventory: React.FC = () => {
                         </button>
                       </div>
                     </div>
-                    <div className="p-10 flex-1 flex flex-col">
-                      <div className="flex justify-between items-start mb-4">
-                        <p className="text-[10px] font-black text-primary uppercase tracking-[0.3em]">{car.marca}</p>
-                        <span className="text-[10px] font-bold text-slate-400 bg-slate-100 dark:bg-white/5 px-3 py-1 rounded-full uppercase">{car.ano}</span>
-                      </div>
-                      <h3 className="text-xl font-bold mb-8 dark:text-white group-hover:text-primary transition-colors line-clamp-1 leading-none">{car.modelo}</h3>
+                    <div className="p-8 md:p-10 flex-1 flex flex-col justify-between">
+                      <div>
+                        <div className="flex justify-between items-start mb-2">
+                          <p className="text-[10px] font-black text-primary uppercase tracking-[0.3em]">{car.marca}</p>
+                          <span className="text-[10px] font-bold text-slate-400 bg-slate-100 dark:bg-white/5 px-3 py-1 rounded-full uppercase">{car.ano}</span>
+                        </div>
+                        <h3 className="text-xl md:text-2xl font-bold mb-4 dark:text-white group-hover:text-primary transition-colors leading-none">{car.modelo}</h3>
 
-                      <div className="grid grid-cols-3 gap-4 py-6 border-y border-slate-100 dark:border-white/5 mb-8">
-                        <div className="flex flex-col items-center">
-                          <span className="material-icons-round text-primary text-base mb-1">speed</span>
-                          <span className="text-[9px] font-black text-slate-500 uppercase">{car.quilometragem}</span>
-                        </div>
-                        <div className="flex flex-col items-center border-x border-slate-100 dark:border-white/5">
-                          <span className="material-icons-round text-primary text-base mb-1">local_gas_station</span>
-                          <span className="text-[9px] font-black text-slate-500 uppercase">{car.combustivel}</span>
-                        </div>
-                        <div className="flex flex-col items-center">
-                          <span className="material-icons-round text-primary text-base mb-1">settings</span>
-                          <span className="text-[9px] font-black text-slate-500 uppercase">Auto</span>
+                        <div className={`grid border-y border-slate-100 dark:border-white/5 py-4 mb-4 ${viewMode === 'list' ? 'grid-cols-3 gap-6 w-full md:w-3/4' : 'grid-cols-3 gap-4'}`}>
+                          <div className="flex flex-col items-center">
+                            <span className="material-icons-round text-primary text-base mb-1">speed</span>
+                            <span className="text-[9px] font-black text-slate-500 uppercase">{car.quilometragem}</span>
+                          </div>
+                          <div className="flex flex-col items-center border-x border-slate-100 dark:border-white/5">
+                            <span className="material-icons-round text-primary text-base mb-1">local_gas_station</span>
+                            <span className="text-[9px] font-black text-slate-500 uppercase">{car.combustivel}</span>
+                          </div>
+                          <div className="flex flex-col items-center">
+                            <span className="material-icons-round text-primary text-base mb-1">settings</span>
+                            <span className="text-[9px] font-black text-slate-500 uppercase">{car.cambio === 'Automático' ? 'Auto' : 'Manual'}</span>
+                          </div>
                         </div>
                       </div>
 
-                      <div className="mt-auto flex justify-between items-center">
-                        <span className="text-2xl font-black text-slate-900 dark:text-white italic tracking-tighter">{formatPrice(car.preco)}</span>
+                      <div className="flex justify-between items-center mt-2">
+                        <span className="text-2xl md:text-3xl font-black text-slate-900 dark:text-white italic tracking-tighter">{formatPrice(car.preco)}</span>
                         <div className="bg-primary text-black p-3 rounded-xl group-hover:scale-110 transition-transform shadow-lg shadow-primary/20">
                           <span className="material-icons-round text-sm">arrow_forward</span>
                         </div>
@@ -324,6 +329,7 @@ const Inventory: React.FC = () => {
                 ))}
               </div>
             ) : (
+              // ... Empty state ...
               <div className="py-32 text-center bg-white dark:bg-surface-dark rounded-[40px] border border-dashed border-slate-200 dark:border-white/10">
                 <span className="material-icons-round text-6xl text-slate-200 dark:text-white/10 mb-6">search_off</span>
                 <h3 className="text-2xl font-black dark:text-white uppercase tracking-tighter mb-2">Nenhum veículo encontrado</h3>

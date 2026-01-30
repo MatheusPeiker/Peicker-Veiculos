@@ -23,6 +23,8 @@ const ContactPlaceholder = () => (
 
 import ScrollToTop from './src/components/ScrollToTop';
 
+import Contact from './pages/Contact';
+
 const App: React.FC = () => {
   return (
     <ErrorBoundary>
@@ -34,7 +36,7 @@ const App: React.FC = () => {
             <Route path="/estoque" element={<Inventory />} />
             <Route path="/vehicle/:id" element={<VehicleDetail />} />
             <Route path="/about" element={<AboutPlaceholder />} />
-            <Route path="/contact" element={<ContactPlaceholder />} />
+            <Route path="/contact" element={<Contact />} />
           </Routes>
         </Layout>
       </Router>
