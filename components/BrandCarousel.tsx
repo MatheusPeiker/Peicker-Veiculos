@@ -1,6 +1,13 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { supabase } from '../src/lib/supabase';
+import chevroletLogo from '@/src/assets/logos/chevrolet.png';
+import citroenLogo from '@/src/assets/logos/citroen.png';
+import jeepLogo from '@/src/assets/logos/jeep.png';
+import hyundaiLogo from '@/src/assets/logos/hyundai.png';
+import renaultLogo from '@/src/assets/logos/renault.svg';
+import mitsubishiLogo from '@/src/assets/logos/mitsubishi.png';
+import fordLogo from '@/src/assets/logos/ford.svg';
 
 // Extended brand logos with multiple name variations
 // Extended brand logos with multiple name variations
@@ -10,22 +17,22 @@ const BRAND_LOGOS: Record<string, string> = {
     'volkswagen': 'https://upload.wikimedia.org/wikipedia/commons/thumb/6/6d/Volkswagen_logo_2019.svg/2048px-Volkswagen_logo_2019.svg.png',
     'vw': 'https://upload.wikimedia.org/wikipedia/commons/thumb/6/6d/Volkswagen_logo_2019.svg/2048px-Volkswagen_logo_2019.svg.png',
     'volks': 'https://upload.wikimedia.org/wikipedia/commons/thumb/6/6d/Volkswagen_logo_2019.svg/2048px-Volkswagen_logo_2019.svg.png',
-    'chevrolet': 'https://upload.wikimedia.org/wikipedia/commons/thumb/1/1e/Chevrolet_logo.svg/800px-Chevrolet_logo.svg.png',
-    'gm': 'https://upload.wikimedia.org/wikipedia/commons/thumb/1/1e/Chevrolet_logo.svg/800px-Chevrolet_logo.svg.png',
-    'renault': 'https://upload.wikimedia.org/wikipedia/commons/thumb/4/49/Renault_2009_logo.svg/2560px-Renault_2009_logo.svg.png',
-    'hyundai': 'https://upload.wikimedia.org/wikipedia/commons/thumb/4/44/Hyundai_Motor_Company_logo.svg/2560px-Hyundai_Motor_Company_logo.svg.png',
-    'ford': 'https://upload.wikimedia.org/wikipedia/commons/thumb/3/3e/Ford_logo_flat.svg/2560px-Ford_logo_flat.svg.png',
-    'toyota': 'https://upload.wikimedia.org/wikipedia/commons/thumb/9/9d/Toyota_carlogo.svg/1200px-Toyota_carlogo.svg.png',
-    'honda': 'https://upload.wikimedia.org/wikipedia/commons/thumb/3/38/Honda.svg/2560px-Honda.svg.png',
-    'jeep': 'https://upload.wikimedia.org/wikipedia/commons/thumb/e/e6/Jeep_logo.svg/2560px-Jeep_logo.svg.png',
-    'nissan': 'https://upload.wikimedia.org/wikipedia/commons/thumb/8/8c/Nissan_logo.svg/2560px-Nissan_logo.svg.png',
-    'mitsubishi': 'https://upload.wikimedia.org/wikipedia/commons/thumb/5/5a/Mitsubishi_logo.svg/2560px-Mitsubishi_logo.svg.png',
-    'bmw': 'https://upload.wikimedia.org/wikipedia/commons/thumb/4/44/BMW.svg/2048px-BMW.svg.png',
-    'mercedesbenz': 'https://upload.wikimedia.org/wikipedia/commons/thumb/9/90/Mercedes-Benz_logo.svg/2048px-Mercedes-Benz_logo.svg.png',
-    'mercedes': 'https://upload.wikimedia.org/wikipedia/commons/thumb/9/90/Mercedes-Benz_logo.svg/2048px-Mercedes-Benz_logo.svg.png',
-    'audi': 'https://upload.wikimedia.org/wikipedia/commons/thumb/9/92/Audi-Logo_2016.svg/2560px-Audi-Logo_2016.svg.png',
-    'kia': 'https://upload.wikimedia.org/wikipedia/commons/thumb/4/47/Kia_logo.svg/2560px-Kia_logo.svg.png',
-    'citroen': 'https://upload.wikimedia.org/wikipedia/commons/thumb/4/42/Citroën_2009.svg/2560px-Citroën_2009.svg.png',
+    'chevrolet': chevroletLogo,
+    'gm': chevroletLogo,
+    'renault': 'https://cdn.jsdelivr.net/npm/simple-icons@v9/icons/renault.svg',
+    'hyundai': hyundaiLogo,
+    'ford': 'https://cdn.jsdelivr.net/npm/simple-icons@v9/icons/ford.svg',
+    'toyota': 'https://logo.clearbit.com/toyota.com',
+    'honda': 'https://logo.clearbit.com/honda.com',
+    'jeep': jeepLogo,
+    'nissan': 'https://logo.clearbit.com/nissan.com',
+    'mitsubishi': mitsubishiLogo,
+    'bmw': 'https://logo.clearbit.com/bmw.com',
+    'mercedesbenz': 'https://logo.clearbit.com/mercedes-benz.com',
+    'mercedes': 'https://logo.clearbit.com/mercedes-benz.com',
+    'audi': 'https://logo.clearbit.com/audi.com',
+    'kia': 'https://logo.clearbit.com/kia.com',
+    'citroen': citroenLogo,
     'peugeot': 'https://upload.wikimedia.org/wikipedia/commons/thumb/f/f6/Peugeot_Logo.svg/2560px-Peugeot_Logo.svg.png',
     'chery': 'https://upload.wikimedia.org/wikipedia/commons/thumb/0/0e/Chery_logo.svg/2560px-Chery_logo.svg.png',
     'caoachery': 'https://upload.wikimedia.org/wikipedia/commons/thumb/0/0e/Chery_logo.svg/2560px-Chery_logo.svg.png',
@@ -105,7 +112,10 @@ const BrandItem: React.FC<{ brand: string }> = ({ brand }) => {
 
 export const BrandCarousel: React.FC = () => {
     const [availableBrands, setAvailableBrands] = useState<string[]>([]);
+    const [currentIndex, setCurrentIndex] = useState(0);
+    const [isAutoPlaying, setIsAutoPlaying] = useState(true);
     const [isPaused, setIsPaused] = useState(false);
+    const pauseTimeoutRef = React.useRef<NodeJS.Timeout | null>(null);
 
     useEffect(() => {
         const fetchBrands = async () => {
@@ -131,31 +141,121 @@ export const BrandCarousel: React.FC = () => {
         fetchBrands();
     }, []);
 
+    // Autoplay logic
+    useEffect(() => {
+        if (!isAutoPlaying || isPaused || availableBrands.length === 0) return;
+
+        const interval = setInterval(() => {
+            setCurrentIndex(prev => (prev + 1) % availableBrands.length);
+        }, 3000);
+
+        return () => clearInterval(interval);
+    }, [isAutoPlaying, isPaused, availableBrands.length]);
+
+    const handleUserInteraction = () => {
+        setIsAutoPlaying(false);
+
+        // Clear existing timeout
+        if (pauseTimeoutRef.current) {
+            clearTimeout(pauseTimeoutRef.current);
+        }
+
+        // Resume after 5 seconds of inactivity
+        pauseTimeoutRef.current = setTimeout(() => {
+            setIsAutoPlaying(true);
+        }, 5000);
+    };
+
+    const handlePrev = () => {
+        handleUserInteraction();
+        setCurrentIndex(prev => (prev - 1 + availableBrands.length) % availableBrands.length);
+    };
+
+    const handleNext = () => {
+        handleUserInteraction();
+        setCurrentIndex(prev => (prev + 1) % availableBrands.length);
+    };
+
+    const handleDotClick = (index: number) => {
+        handleUserInteraction();
+        setCurrentIndex(index);
+    };
+
     if (availableBrands.length === 0) return null;
+
+    // Calculate visible brands (show 5 at a time, centered on current)
+    const getVisibleBrands = () => {
+        const visibleCount = 5;
+        const brands = [];
+        for (let i = -2; i <= 2; i++) {
+            const index = (currentIndex + i + availableBrands.length) % availableBrands.length;
+            brands.push({ brand: availableBrands[index], offset: i, index });
+        }
+        return brands;
+    };
+
+    const visibleBrands = getVisibleBrands();
 
     return (
         <div
             className="brand-carousel-container"
             onMouseEnter={() => setIsPaused(true)}
             onMouseLeave={() => setIsPaused(false)}
-            onTouchStart={() => setIsPaused(true)}
-            onTouchEnd={() => setIsPaused(false)}
         >
             <div className="brand-carousel-header">
                 <p>Nossas Marcas</p>
             </div>
 
             <div className="brand-carousel-wrapper">
-                <div className={`brand-carousel-track ${isPaused ? 'paused' : ''}`}>
-                    {/* First copy */}
-                    {availableBrands.map((brand, i) => (
-                        <BrandItem key={`set1-${brand}-${i}`} brand={brand} />
-                    ))}
-                    {/* Second copy for seamless loop */}
-                    {availableBrands.map((brand, i) => (
-                        <BrandItem key={`set2-${brand}-${i}`} brand={brand} />
-                    ))}
+                {/* Previous Button */}
+                <button
+                    onClick={handlePrev}
+                    className="carousel-nav-button carousel-nav-prev"
+                    aria-label="Marca anterior"
+                >
+                    <span className="material-icons-round">chevron_left</span>
+                </button>
+
+                {/* Brands Track */}
+                <div className="brand-carousel-track-container">
+                    <div className="brand-carousel-track">
+                        {visibleBrands.map(({ brand, offset, index }) => (
+                            <div
+                                key={`${brand}-${index}`}
+                                className={`brand-logo-item ${offset === 0 ? 'active' : ''}`}
+                                style={{
+                                    transform: `translateX(${offset * 200}px) scale(${offset === 0 ? 1.2 : 0.8})`,
+                                    opacity: offset === 0 ? 1 : 0.4,
+                                    zIndex: offset === 0 ? 10 : 1
+                                }}
+                                onClick={() => handleDotClick(index)}
+                            >
+                                <BrandItem brand={brand} />
+                            </div>
+                        ))}
+                    </div>
                 </div>
+
+                {/* Next Button */}
+                <button
+                    onClick={handleNext}
+                    className="carousel-nav-button carousel-nav-next"
+                    aria-label="Próxima marca"
+                >
+                    <span className="material-icons-round">chevron_right</span>
+                </button>
+            </div>
+
+            {/* Progress Indicators */}
+            <div className="carousel-dots">
+                {availableBrands.map((_, index) => (
+                    <button
+                        key={index}
+                        onClick={() => handleDotClick(index)}
+                        className={`carousel-dot ${index === currentIndex ? 'active' : ''}`}
+                        aria-label={`Ir para ${availableBrands[index]}`}
+                    />
+                ))}
             </div>
 
             <style>{`
@@ -166,20 +266,21 @@ export const BrandCarousel: React.FC = () => {
                     border-top: 1px solid rgb(226 232 240);
                     border-bottom: 1px solid rgb(226 232 240);
                     overflow: hidden;
+                    position: relative;
                 }
-                
+
                 .dark .brand-carousel-container {
                     background: rgba(0, 0, 0, 0.2);
                     border-color: rgba(255, 255, 255, 0.05);
                 }
-                
+
                 .brand-carousel-header {
                     max-width: 80rem;
                     margin: 0 auto 2rem;
                     padding: 0 1rem;
                     text-align: center;
                 }
-                
+
                 .brand-carousel-header p {
                     font-size: 10px;
                     text-transform: uppercase;
@@ -187,47 +288,158 @@ export const BrandCarousel: React.FC = () => {
                     font-weight: 900;
                     color: rgb(148 163 184);
                 }
-                
+
                 .brand-carousel-wrapper {
-                    overflow: hidden;
-                    width: 100%;
-                }
-                
-                .brand-carousel-track {
-                    display: flex;
-                    align-items: center;
-                    width: max-content;
-                    animation: marquee-scroll 40s linear infinite;
-                }
-                
-                .brand-carousel-track.paused {
-                    animation-play-state: paused;
-                }
-                
-                .brand-logo-item {
-                    flex-shrink: 0;
-                    min-width: 160px;
-                    padding: 0 3rem;
+                    position: relative;
                     display: flex;
                     align-items: center;
                     justify-content: center;
-                    filter: grayscale(100%);
-                    opacity: 0.4;
-                    transition: all 0.3s ease;
+                    gap: 2rem;
+                    padding: 0 4rem;
                 }
-                
-                .brand-logo-item:hover {
+
+                .brand-carousel-track-container {
+                    flex: 1;
+                    max-width: 1000px;
+                    height: 120px;
+                    position: relative;
+                    overflow: hidden;
+                }
+
+                .brand-carousel-track {
+                    position: relative;
+                    height: 100%;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                }
+
+                .brand-logo-item {
+                    position: absolute;
+                    min-width: 160px;
+                    height: 80px;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+                    cursor: pointer;
+                }
+
+                .brand-logo-item:not(.active) {
+                    filter: grayscale(100%);
+                }
+
+                .brand-logo-item.active {
                     filter: grayscale(0%);
-                    opacity: 1;
+                }
+
+                .brand-logo-item:hover {
+                    filter: grayscale(0%) !important;
+                    transform: scale(1.1) !important;
+                }
+
+                .brand-logo-item a {
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    width: 100%;
+                    height: 100%;
+                }
+
+                .carousel-nav-button {
+                    width: 48px;
+                    height: 48px;
+                    border-radius: 50%;
+                    background: rgba(255, 255, 255, 0.9);
+                    border: 1px solid rgb(226 232 240);
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    cursor: pointer;
+                    transition: all 0.3s ease;
+                    flex-shrink: 0;
+                    z-index: 20;
+                }
+
+                .dark .carousel-nav-button {
+                    background: rgba(255, 255, 255, 0.1);
+                    border-color: rgba(255, 255, 255, 0.1);
+                }
+
+                .carousel-nav-button:hover {
+                    background: #F2FF00;
+                    border-color: #F2FF00;
                     transform: scale(1.1);
                 }
-                
-                @keyframes marquee-scroll {
-                    0% {
-                        transform: translateX(0);
+
+                .dark .carousel-nav-button:hover {
+                    background: #F2FF00;
+                    border-color: #F2FF00;
+                }
+
+                .carousel-nav-button span {
+                    font-size: 24px;
+                    color: rgb(71 85 105);
+                }
+
+                .dark .carousel-nav-button span {
+                    color: white;
+                }
+
+                .carousel-nav-button:hover span {
+                    color: black;
+                }
+
+                .carousel-dots {
+                    display: flex;
+                    justify-content: center;
+                    gap: 8px;
+                    margin-top: 2rem;
+                    padding: 0 1rem;
+                }
+
+                .carousel-dot {
+                    width: 8px;
+                    height: 8px;
+                    border-radius: 50%;
+                    background: rgb(203 213 225);
+                    border: none;
+                    cursor: pointer;
+                    transition: all 0.3s ease;
+                    padding: 0;
+                }
+
+                .dark .carousel-dot {
+                    background: rgba(255, 255, 255, 0.2);
+                }
+
+                .carousel-dot:hover {
+                    background: rgb(148 163 184);
+                    transform: scale(1.2);
+                }
+
+                .carousel-dot.active {
+                    background: #F2FF00;
+                    width: 24px;
+                    border-radius: 4px;
+                }
+
+                @media (max-width: 768px) {
+                    .brand-carousel-wrapper {
+                        padding: 0 1rem;
                     }
-                    100% {
-                        transform: translateX(-50%);
+
+                    .carousel-nav-button {
+                        width: 40px;
+                        height: 40px;
+                    }
+
+                    .carousel-nav-button span {
+                        font-size: 20px;
+                    }
+
+                    .brand-carousel-track-container {
+                        max-width: 600px;
                     }
                 }
             `}</style>

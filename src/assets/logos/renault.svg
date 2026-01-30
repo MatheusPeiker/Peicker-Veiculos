@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200">
+  <!-- Yellow diamond background -->
+  <path d="M 100 10 L 190 100 L 100 190 L 10 100 Z" fill="#FFCC00"/>
+  
+  <!-- Black border -->
+  <path d="M 100 10 L 190 100 L 100 190 L 10 100 Z" 
+        fill="none" stroke="black" stroke-width="3"/>
+  
+  <!-- Inner diamond shape (Renault logo design) -->
+  <g fill="none" stroke="black" stroke-width="2.5">
+    <!-- Top section -->
+    <path d="M 100 30 L 160 100 L 100 100 Z"/>
+    
+    <!-- Bottom left section -->
+    <path d="M 40 100 L 100 170 L 100 100 Z"/>
+    
+    <!-- Bottom right section -->  
+    <path d="M 100 100 L 160 100 L 100 170 Z"/>
+    
+    <!-- Center vertical line -->
+    <line x1="100" y1="30" x2="100" y2="170"/>
+    
+    <!-- Horizontal center line -->
+    <line x1="40" y1="100" x2="160" y2="100"/>
+  </g>
+</svg>
