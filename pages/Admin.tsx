@@ -205,7 +205,7 @@ const Admin: React.FC = () => {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 className="w-full bg-slate-100 dark:bg-background-dark border-none rounded-2xl focus:ring-2 focus:ring-primary text-sm p-4 transition-all outline-none text-slate-900 dark:text-white"
-                placeholder="flpeicker99@gmail.com"
+                placeholder="Seu e-mail"
                 required
               />
             </div>
