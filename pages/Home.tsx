@@ -56,7 +56,7 @@ const Home: React.FC = () => {
             <Link to="/estoque" className="bg-primary text-black font-black py-6 px-16 rounded-2xl text-sm hover:scale-105 transition-all flex items-center justify-center gap-3 uppercase shadow-2xl shadow-primary/30">
               EXPLORAR ESTOQUE <span className="material-icons-round">explore</span>
             </Link>
-            <Link to="/contact" className="glass-effect text-white border border-white/20 font-bold py-6 px-16 rounded-2xl text-sm hover:bg-white/10 transition-all uppercase tracking-widest">
+            <Link to="/contact" className="glass-effect text-white border border-white/20 font-bold py-6 px-16 rounded-2xl text-sm hover:bg-white/10 transition-all uppercase tracking-widest flex items-center justify-center">
               FALE CONOSCO
             </Link>
           </div>

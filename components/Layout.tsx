@@ -59,10 +59,11 @@ const Header: React.FC = () => {
         {/* Desktop Menu */}
         <div className="hidden md:flex items-center space-x-10">
           <div className="flex items-center space-x-8">
-            {['Início', 'Estoque', 'Contato'].map((item) => {
+            {['Início', 'Estoque', 'Contato', 'Admin'].map((item) => {
               let path = '/';
               if (item === 'Estoque') path = '/estoque';
               else if (item === 'Contato') path = '/contact';
+              else if (item === 'Admin') path = '/admin';
 
               const isActive = location.pathname === path;
               const textColor = isScrolled ? 'text-slate-600 dark:text-slate-400' : 'text-white/80 hover:text-white';
@@ -111,10 +112,11 @@ const Header: React.FC = () => {
       {/* Mobile Menu Overlay */}
       {isMobileMenuOpen && (
         <div className="md:hidden absolute top-full left-0 w-full bg-white dark:bg-background-dark border-b border-slate-200 dark:border-white/5 shadow-2xl p-6 flex flex-col gap-4 animate-slide-down">
-          {['Início', 'Estoque', 'Contato'].map((item) => {
+          {['Início', 'Estoque', 'Contato', 'Admin'].map((item) => {
             let path = '/';
             if (item === 'Estoque') path = '/estoque';
             else if (item === 'Contato') path = '/contact';
+            else if (item === 'Admin') path = '/admin';
 
             const isActive = location.pathname === path;
             return (
