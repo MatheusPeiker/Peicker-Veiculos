@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
+import DOMPurify from 'dompurify';
 import { supabase } from '../src/lib/supabase';
 import chevroletLogo from '@/src/assets/logos/chevrolet.png';
 import citroenLogo from '@/src/assets/logos/citroen.png';
@@ -103,7 +104,7 @@ const BrandItem: React.FC<{ brand: string }> = ({ brand }) => {
                 />
             ) : (
                 <span className="font-black text-xl uppercase italic text-slate-500 dark:text-white whitespace-nowrap">
-                    {brand}
+                    {DOMPurify.sanitize(brand)}
                 </span>
             )}
         </Link>

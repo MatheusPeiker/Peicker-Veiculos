@@ -24,6 +24,7 @@ const ContactPlaceholder = () => (
 import ScrollToTop from './src/components/ScrollToTop';
 
 import Contact from './pages/Contact';
+import Admin from './pages/Admin';
 
 const App: React.FC = () => {
   return (
@@ -37,6 +38,7 @@ const App: React.FC = () => {
             <Route path="/vehicle/:id" element={<VehicleDetail />} />
             <Route path="/about" element={<AboutPlaceholder />} />
             <Route path="/contact" element={<Contact />} />
+            <Route path="/admin" element={<Admin />} />
           </Routes>
         </Layout>
       </Router>

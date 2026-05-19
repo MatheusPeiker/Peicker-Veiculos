@@ -1,5 +1,6 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
+import DOMPurify from 'dompurify';
 import { supabase } from '../src/lib/supabase';
 import { Veiculo } from '../types';
 
@@ -362,23 +363,23 @@ const Inventory: React.FC = () => {
                     <div className="p-8 md:p-10 flex-1 flex flex-col justify-between">
                       <div>
                         <div className="flex justify-between items-start mb-2">
-                          <p className="text-[10px] font-black text-primary uppercase tracking-[0.3em]">{car.marca}</p>
-                          <span className="text-[10px] font-bold text-slate-400 bg-slate-100 dark:bg-white/5 px-3 py-1 rounded-full uppercase">{car.ano}</span>
+                          <p className="text-[10px] font-black text-primary uppercase tracking-[0.3em]">{DOMPurify.sanitize(car.marca)}</p>
+                          <span className="text-[10px] font-bold text-slate-400 bg-slate-100 dark:bg-white/5 px-3 py-1 rounded-full uppercase">{DOMPurify.sanitize(String(car.ano))}</span>
                         </div>
-                        <h3 className="text-xl md:text-2xl font-bold mb-4 dark:text-white group-hover:text-primary transition-colors leading-none">{car.modelo}</h3>
+                        <h3 className="text-xl md:text-2xl font-bold mb-4 dark:text-white group-hover:text-primary transition-colors leading-none">{DOMPurify.sanitize(car.modelo)}</h3>
 
                         <div className={`grid border-y border-slate-100 dark:border-white/5 py-4 mb-4 ${viewMode === 'list' ? 'grid-cols-3 gap-6 w-full md:w-3/4' : 'grid-cols-3 gap-4'}`}>
                           <div className="flex flex-col items-center">
                             <span className="material-icons-round text-primary text-base mb-1">speed</span>
-                            <span className="text-[9px] font-black text-slate-500 uppercase">{car.quilometragem}</span>
+                            <span className="text-[9px] font-black text-slate-500 uppercase">{DOMPurify.sanitize(car.quilometragem || '')}</span>
                           </div>
                           <div className="flex flex-col items-center border-x border-slate-100 dark:border-white/5">
                             <span className="material-icons-round text-primary text-base mb-1">local_gas_station</span>
-                            <span className="text-[9px] font-black text-slate-500 uppercase">{car.combustivel}</span>
+                            <span className="text-[9px] font-black text-slate-500 uppercase">{DOMPurify.sanitize(car.combustivel)}</span>
                           </div>
                           <div className="flex flex-col items-center">
                             <span className="material-icons-round text-primary text-base mb-1">settings</span>
-                            <span className="text-[9px] font-black text-slate-500 uppercase">{car.cambio === 'Automático' ? 'Auto' : 'Manual'}</span>
+                            <span className="text-[9px] font-black text-slate-500 uppercase">{DOMPurify.sanitize(car.cambio === 'Automático' ? 'Auto' : 'Manual')}</span>
                           </div>
                         </div>
                       </div>

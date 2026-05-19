@@ -1,6 +1,7 @@
 
 import React, { useState, useEffect, useRef } from 'react';
-import { useParams, Link, Navigate } from 'react-router-dom';
+import { Link, Navigate, useParams } from 'react-router-dom';
+import DOMPurify from 'dompurify';
 import { supabase } from '../src/lib/supabase';
 import { Veiculo } from '../types';
 
@@ -256,9 +257,9 @@ const VehicleDetail: React.FC = () => {
               </h2>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-y-6 gap-x-16">
                 {[
-                  { label: 'Modelo', value: car.modelo },
-                  { label: 'Marca', value: car.marca },
-                  { label: 'Ano', value: car.ano },
+                  { label: 'Modelo', value: DOMPurify.sanitize(car.modelo) },
+                  { label: 'Marca', value: DOMPurify.sanitize(car.marca) },
+                  { label: 'Ano', value: DOMPurify.sanitize(String(car.ano)) },
                   { label: 'KM', value: car.quilometragem || '0 km' },
                   { label: 'Câmbio', value: car.cambio },
                   { label: 'Combustível', value: car.combustivel },
@@ -279,8 +280,8 @@ const VehicleDetail: React.FC = () => {
                 Descrição
               </h2>
               <p className="text-slate-600 dark:text-slate-300 leading-relaxed font-light text-lg">
-                Veículo {car.marca} {car.modelo} ano {car.ano}, disponível para venda.
-                Entre em contato para mais detalhes sobre este {car.tipo}.
+                Veículo {DOMPurify.sanitize(car.marca)} {DOMPurify.sanitize(car.modelo)} ano {DOMPurify.sanitize(String(car.ano))}, disponível para venda.
+                Entre em contato para mais detalhes sobre este {DOMPurify.sanitize(car.tipo)}.
                 {/* Ensure description fallback if not in DB */}
               </p>
             </div>
@@ -292,7 +293,7 @@ const VehicleDetail: React.FC = () => {
               <div className="bg-white dark:bg-surface-dark p-10 rounded-[40px] border border-slate-200 dark:border-white/5 shadow-2xl">
                 <div className="mb-8">
                   <span className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.4em] block mb-2">Preço à vista</span>
-                  <h1 className="text-4xl font-black text-slate-900 dark:text-white mb-2 leading-none uppercase italic tracking-tighter">{car.modelo}</h1>
+                  <h1 className="text-4xl font-black text-slate-900 dark:text-white mb-2 leading-none uppercase italic tracking-tighter">{DOMPurify.sanitize(car.modelo)}</h1>
                   <span className="text-5xl font-black text-primary drop-shadow-[0_2px_10px_rgba(242,255,0,0.3)] block mt-4">
                     {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(car.preco)}
                   </span>
@@ -302,17 +303,17 @@ const VehicleDetail: React.FC = () => {
                   <div className="bg-slate-50 dark:bg-background-dark p-4 rounded-3xl text-center border border-transparent hover:border-primary/20 transition-all">
                     <span className="material-icons-round text-primary text-lg block mb-1">calendar_today</span>
                     <p className="text-[8px] font-black uppercase text-slate-400 mb-1">Ano</p>
-                    <p className="font-black text-xs dark:text-white">{car.ano}</p>
+                    <p className="font-black text-xs dark:text-white">{DOMPurify.sanitize(String(car.ano))}</p>
                   </div>
                   <div className="bg-slate-50 dark:bg-background-dark p-4 rounded-3xl text-center border border-transparent hover:border-primary/20 transition-all">
                     <span className="material-icons-round text-primary text-lg block mb-1">speed</span>
                     <p className="text-[8px] font-black uppercase text-slate-400 mb-1">Km</p>
-                    <p className="font-black text-xs dark:text-white">{car.quilometragem}</p>
+                    <p className="font-black text-xs dark:text-white">{DOMPurify.sanitize(car.quilometragem || '')}</p>
                   </div>
                   <div className="bg-slate-50 dark:bg-background-dark p-4 rounded-3xl text-center border border-transparent hover:border-primary/20 transition-all">
                     <span className="material-icons-round text-primary text-lg block mb-1">local_gas_station</span>
                     <p className="text-[8px] font-black uppercase text-slate-400 mb-1">Combust.</p>
-                    <p className="font-black text-xs dark:text-white">{car.combustivel}</p>
+                    <p className="font-black text-xs dark:text-white">{DOMPurify.sanitize(car.combustivel)}</p>
                   </div>
                 </div>
 
