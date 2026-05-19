@@ -52,9 +52,7 @@ const Admin: React.FC = () => {
   const fetchVehicles = async () => {
     setLoadingVehicles(true);
     const { data, error } = await supabase.from('veiculos').select('*').order('id', { ascending: false });
-    if (error) {
-      console.error('Error fetching vehicles', error);
-    } else {
+    if (!error) {
       setVehicles(data || []);
     }
     setLoadingVehicles(false);
@@ -64,22 +62,26 @@ const Admin: React.FC = () => {
     e.preventDefault();
     setAuthLoading(true);
     setAuthError('');
-    
-    // Check if the user is using the allowed email. (Optional strict check)
-    if (email !== 'flpeicker99@gmail.com') {
-      setAuthError('E-mail não autorizado para a área administrativa.');
-      setAuthLoading(false);
-      return;
-    }
 
-    const { error } = await supabase.auth.signInWithPassword({
+    const { data, error } = await supabase.auth.signInWithPassword({
       email,
       password,
     });
 
     if (error) {
-      setAuthError(error.message);
+      setAuthError('Credenciais inválidas.');
+      setAuthLoading(false);
+      return;
     }
+
+    const adminEmail = import.meta.env.VITE_ADMIN_EMAIL;
+    if (!adminEmail || data.session?.user?.email !== adminEmail) {
+      await supabase.auth.signOut();
+      setAuthError('Acesso não autorizado para esta conta.');
+      setAuthLoading(false);
+      return;
+    }
+
     setAuthLoading(false);
   };
 
@@ -95,10 +97,26 @@ const Admin: React.FC = () => {
     }));
   };
 
+  const ALLOWED_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
+  const MAX_IMAGE_SIZE = 5 * 1024 * 1024;
+
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files[0]) {
-      setImageFile(e.target.files[0]);
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!ALLOWED_IMAGE_TYPES.includes(file.type)) {
+      setErrorMessage('Formato não permitido. Use JPG, PNG, WebP ou GIF.');
+      e.target.value = '';
+      return;
     }
+
+    if (file.size > MAX_IMAGE_SIZE) {
+      setErrorMessage('Arquivo muito grande. Tamanho máximo: 5MB.');
+      e.target.value = '';
+      return;
+    }
+
+    setImageFile(file);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -113,7 +131,7 @@ const Admin: React.FC = () => {
       // Handle Image Upload if a file was selected
       if (imageFile) {
         const fileExt = imageFile.name.split('.').pop();
-        const fileName = `${Math.random()}.${fileExt}`;
+        const fileName = `${crypto.randomUUID()}.${fileExt}`;
         const filePath = `${fileName}`;
 
         const { error: uploadError, data } = await supabase.storage
@@ -132,12 +150,17 @@ const Admin: React.FC = () => {
         finalImageUrl = publicUrlData.publicUrl;
       }
 
+      const price = parseFloat(formData.preco);
+      if (isNaN(price) || price < 0 || price > 10000000) {
+        throw new Error('Preço inválido.');
+      }
+
       const { error } = await supabase.from('veiculos').insert([
         {
-          marca: formData.marca,
-          modelo: formData.modelo,
-          ano: formData.ano,
-          preco: parseFloat(formData.preco),
+          marca: formData.marca.trim(),
+          modelo: formData.modelo.trim(),
+          ano: formData.ano.trim(),
+          preco: price,
           quilometragem: formData.quilometragem,
           cambio: formData.cambio,
           combustivel: formData.combustivel,
@@ -167,8 +190,7 @@ const Admin: React.FC = () => {
       // Refresh list
       fetchVehicles();
     } catch (err: any) {
-      setErrorMessage(err.message || 'Erro ao adicionar veículo.');
-      console.error(err);
+      setErrorMessage(err.message === 'Preço inválido.' ? err.message : 'Erro ao adicionar veículo. Tente novamente.');
     } finally {
       setLoading(false);
     }
@@ -188,7 +210,7 @@ const Admin: React.FC = () => {
       setSuccessMessage('Veículo removido com sucesso.');
       setTimeout(() => setSuccessMessage(''), 3000);
     } catch (err: any) {
-      setErrorMessage(`Erro ao remover: ${err.message}`);
+      setErrorMessage('Erro ao remover veículo. Tente novamente.');
     }
   };
 
@@ -206,6 +228,7 @@ const Admin: React.FC = () => {
                 onChange={(e) => setEmail(e.target.value)}
                 className="w-full bg-slate-100 dark:bg-background-dark border-none rounded-2xl focus:ring-2 focus:ring-primary text-sm p-4 transition-all outline-none text-slate-900 dark:text-white"
                 placeholder="Seu e-mail"
+                autoComplete="off"
                 required
               />
             </div>

@@ -16,9 +16,7 @@ const Home: React.FC = () => {
         .limit(3)
         .order('id', { ascending: false }); // Show newest added cars as featured
 
-      if (error) {
-        console.error('Error fetching featured cars:', error);
-      } else {
+      if (!error) {
         setFeaturedCars(data || []);
       }
     };

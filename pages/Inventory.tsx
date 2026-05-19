@@ -48,9 +48,7 @@ const Inventory: React.FC = () => {
       .from('veiculos')
       .select('*');
 
-    if (error) {
-      console.error('Error fetching vehicles:', error);
-    } else {
+    if (!error) {
       setCars(data || []);
     }
     setLoading(false);
@@ -80,7 +78,6 @@ const Inventory: React.FC = () => {
   // Update filter if URL param changes
   useEffect(() => {
     const brandParam = searchParams.get('brand');
-    console.log('Brand param changed:', brandParam);
     if (brandParam) {
       setFilterBrand(capitalize(brandParam));
     } else {

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 
 const Contact: React.FC = () => {
     const [name, setName] = useState('');
@@ -6,12 +6,34 @@ const Contact: React.FC = () => {
     const [phone, setPhone] = useState('');
     const [message, setMessage] = useState('');
     const [status, setStatus] = useState<'' | 'sending' | 'success' | 'error'>('');
+    const [errorMsg, setErrorMsg] = useState('');
+    const lastSubmitRef = useRef<number>(0);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        setStatus('sending');
+        setErrorMsg('');
 
-        // Mock success
+        const trimmedName = name.trim();
+        const trimmedMessage = message.trim();
+
+        if (trimmedName.length < 2 || trimmedName.length > 100) {
+            setErrorMsg('Nome deve ter entre 2 e 100 caracteres.');
+            return;
+        }
+        if (trimmedMessage.length < 10 || trimmedMessage.length > 1000) {
+            setErrorMsg('Mensagem deve ter entre 10 e 1000 caracteres.');
+            return;
+        }
+
+        const now = Date.now();
+        if (now - lastSubmitRef.current < 30000) {
+            setErrorMsg('Aguarde 30 segundos antes de enviar novamente.');
+            return;
+        }
+
+        setStatus('sending');
+        lastSubmitRef.current = now;
+
         setTimeout(() => {
             setStatus('success');
             setName('');
@@ -178,6 +200,9 @@ const Contact: React.FC = () => {
                                 ></textarea>
                             </div>
 
+                            {errorMsg && (
+                                <p className="text-red-500 text-sm font-bold text-center">{errorMsg}</p>
+                            )}
                             <button
                                 type="submit"
                                 disabled={status === 'sending' || status === 'success'}

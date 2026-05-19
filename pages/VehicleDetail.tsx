@@ -31,9 +31,7 @@ const VehicleDetail: React.FC = () => {
       .eq('id', id)
       .single();
 
-    if (error) {
-      console.error('Error fetching vehicle:', error);
-    } else {
+    if (!error) {
       setCar(data);
     }
     setLoading(false);
