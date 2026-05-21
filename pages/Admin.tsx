@@ -197,7 +197,7 @@ const Admin: React.FC = () => {
       // Refresh list
       fetchVehicles();
     } catch (err: any) {
-      setErrorMessage(err.message === 'Preço inválido.' ? err.message : 'Erro ao adicionar veículo. Tente novamente.');
+      setErrorMessage(err.message || 'Erro ao adicionar veículo. Tente novamente.');
     } finally {
       setLoading(false);
     }
