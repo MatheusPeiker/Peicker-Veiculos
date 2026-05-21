@@ -74,8 +74,15 @@ const Admin: React.FC = () => {
       return;
     }
 
-    const adminEmail = import.meta.env.VITE_ADMIN_EMAIL;
-    if (!adminEmail || data.session?.user?.email !== adminEmail) {
+    const adminEmail = import.meta.env.VITE_ADMIN_EMAIL?.trim();
+
+    if (!data.session || !data.session.user) {
+      setAuthError('Confirme seu e-mail antes de fazer login. Verifique sua caixa de entrada.');
+      setAuthLoading(false);
+      return;
+    }
+
+    if (!adminEmail || data.session.user.email?.trim().toLowerCase() !== adminEmail.toLowerCase()) {
       await supabase.auth.signOut();
       setAuthError('Acesso não autorizado para esta conta.');
       setAuthLoading(false);
