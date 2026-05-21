@@ -15,7 +15,7 @@ const Admin: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [successMessage, setSuccessMessage] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
-  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [imageFiles, setImageFiles] = useState<File[]>([]);
 
   const [formData, setFormData] = useState({
     marca: '',
@@ -101,22 +101,24 @@ const Admin: React.FC = () => {
   const MAX_IMAGE_SIZE = 5 * 1024 * 1024;
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
+    const files = Array.from(e.target.files || []);
+    if (files.length === 0) return;
 
-    if (!ALLOWED_IMAGE_TYPES.includes(file.type)) {
-      setErrorMessage('Formato não permitido. Use JPG, PNG, WebP ou GIF.');
-      e.target.value = '';
-      return;
+    for (const file of files) {
+      if (!ALLOWED_IMAGE_TYPES.includes(file.type)) {
+        setErrorMessage(`"${file.name}": formato não permitido. Use JPG, PNG, WebP ou GIF.`);
+        e.target.value = '';
+        return;
+      }
+      if (file.size > MAX_IMAGE_SIZE) {
+        setErrorMessage(`"${file.name}": arquivo muito grande. Máximo 5MB por imagem.`);
+        e.target.value = '';
+        return;
+      }
     }
 
-    if (file.size > MAX_IMAGE_SIZE) {
-      setErrorMessage('Arquivo muito grande. Tamanho máximo: 5MB.');
-      e.target.value = '';
-      return;
-    }
-
-    setImageFile(file);
+    setImageFiles(files);
+    setErrorMessage('');
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -128,26 +130,33 @@ const Admin: React.FC = () => {
     try {
       let finalImageUrl = formData.imagem_url;
 
-      // Handle Image Upload if a file was selected
-      if (imageFile) {
-        const fileExt = imageFile.name.split('.').pop();
-        const fileName = `${crypto.randomUUID()}.${fileExt}`;
-        const filePath = `${fileName}`;
+      if (imageFiles.length > 0) {
+        const uploadedUrls: string[] = [];
 
-        const { error: uploadError, data } = await supabase.storage
-          .from('veiculos-imagens')
-          .upload(filePath, imageFile);
+        for (const file of imageFiles) {
+          const fileExt = file.name.split('.').pop();
+          const fileName = `${crypto.randomUUID()}.${fileExt}`;
 
-        if (uploadError) {
-          throw new Error(`Erro ao fazer upload da imagem: ${uploadError.message}`);
+          const { error: uploadError } = await supabase.storage
+            .from('veiculos-imagens')
+            .upload(fileName, file);
+
+          if (uploadError) {
+            throw new Error(`Erro ao fazer upload de "${file.name}": ${uploadError.message}`);
+          }
+
+          const { data: publicUrlData } = supabase.storage
+            .from('veiculos-imagens')
+            .getPublicUrl(fileName);
+
+          uploadedUrls.push(publicUrlData.publicUrl);
         }
 
-        // Obter URL pública
-        const { data: publicUrlData } = supabase.storage
-          .from('veiculos-imagens')
-          .getPublicUrl(filePath);
-
-        finalImageUrl = publicUrlData.publicUrl;
+        // Combine uploaded URLs with any manually typed URLs
+        const manualUrls = formData.imagem_url.trim();
+        finalImageUrl = manualUrls
+          ? [...uploadedUrls, manualUrls].join('\n')
+          : uploadedUrls.join('\n');
       }
 
       const price = parseFloat(formData.preco);
@@ -185,7 +194,7 @@ const Admin: React.FC = () => {
         tipo: 'Carro',
         imagem_url: '',
       });
-      setImageFile(null);
+      setImageFiles([]);
       
       // Refresh list
       fetchVehicles();
@@ -348,14 +357,25 @@ const Admin: React.FC = () => {
                 </h3>
                 
                 <div>
-                  <label className="block text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 mb-2">Fazer Upload de Imagem</label>
-                  <input 
-                    type="file" 
+                  <label className="block text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 mb-2">Fazer Upload de Imagens</label>
+                  <input
+                    type="file"
                     accept="image/*"
+                    multiple
                     onChange={handleFileChange}
                     className="w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-sm file:font-black file:bg-primary/10 file:text-primary hover:file:bg-primary/20 transition-all cursor-pointer"
                   />
-                  <p className="text-xs text-slate-400 mt-2">A imagem será enviada para o banco e a URL gerada automaticamente.</p>
+                  {imageFiles.length > 0 && (
+                    <div className="mt-3 flex flex-wrap gap-2">
+                      {imageFiles.map((file, i) => (
+                        <span key={i} className="inline-flex items-center gap-1 bg-primary/10 text-primary text-xs font-bold px-3 py-1 rounded-full">
+                          <span className="material-icons-round text-xs">image</span>
+                          {file.name}
+                        </span>
+                      ))}
+                    </div>
+                  )}
+                  <p className="text-xs text-slate-400 mt-2">Selecione uma ou mais imagens. Cada uma será enviada e a URL gerada automaticamente.</p>
                 </div>
 
                 <div className="relative flex items-center py-2">
