@@ -74,24 +74,8 @@ const Admin: React.FC = () => {
       return;
     }
 
-    const adminEmail = import.meta.env.VITE_ADMIN_EMAIL?.trim();
-
-    console.log('[Admin Login Debug]', {
-      sessionExists: !!data.session,
-      userEmail: data.session?.user?.email,
-      adminEmail,
-      envKeys: Object.keys(import.meta.env).filter(k => k.startsWith('VITE_')),
-    });
-
     if (!data.session || !data.session.user) {
       setAuthError('Confirme seu e-mail antes de fazer login. Verifique sua caixa de entrada.');
-      setAuthLoading(false);
-      return;
-    }
-
-    if (!adminEmail || data.session.user.email?.trim().toLowerCase() !== adminEmail.toLowerCase()) {
-      await supabase.auth.signOut();
-      setAuthError(`Acesso não autorizado. Email da sessão: ${data.session.user.email} | Admin esperado: ${adminEmail ?? 'NÃO DEFINIDO'}`);
       setAuthLoading(false);
       return;
     }
