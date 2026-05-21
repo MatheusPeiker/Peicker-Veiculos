@@ -25,7 +25,7 @@ const Admin: React.FC = () => {
     quilometragem: '',
     cambio: 'Automático',
     combustivel: 'Gasolina',
-    tipo: 'Carro',
+    tipo: 'carro',
     imagem_url: '', // Fallback if they want to paste a URL instead
   });
 
@@ -189,7 +189,7 @@ const Admin: React.FC = () => {
         quilometragem: '',
         cambio: 'Automático',
         combustivel: 'Gasolina',
-        tipo: 'Carro',
+        tipo: 'carro',
         imagem_url: '',
       });
       setImageFiles([]);
@@ -197,7 +197,7 @@ const Admin: React.FC = () => {
       // Refresh list
       fetchVehicles();
     } catch (err: any) {
-      setErrorMessage(err.message || 'Erro ao adicionar veículo. Tente novamente.');
+      setErrorMessage(err.message || err.details || err.hint || JSON.stringify(err));
     } finally {
       setLoading(false);
     }
@@ -343,8 +343,8 @@ const Admin: React.FC = () => {
                 <div>
                   <label className="block text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 mb-2">Tipo</label>
                   <select name="tipo" value={formData.tipo} onChange={handleInputChange} className="w-full bg-slate-100 dark:bg-background-dark border-none rounded-2xl focus:ring-2 focus:ring-primary text-sm p-4 transition-all outline-none text-slate-900 dark:text-white appearance-none">
-                    <option value="Carro">Carro</option>
-                    <option value="Moto">Moto</option>
+                    <option value="carro">Carro</option>
+                    <option value="moto">Moto</option>
                   </select>
                 </div>
               </div>
